@@ -270,17 +270,26 @@
     });
   }
 
-  // ─── Paper Viewer (no download) ─────────
+  // ─── Paper Viewer (Google Docs wrapper) ───
   window.openPaperViewer = (id, title, url, type) => {
     if (!url) { showToast('Paper not available yet.', 'error'); return; }
     if (viewerTitle) viewerTitle.textContent = title;
     if (viewerFrame) {
-      // Use Google Docs Viewer for PDFs to prevent Chrome from blocking the iframe
+      // Use Google Docs Viewer for PDFs to prevent Chrome from blocking the cross-origin iframe
+      // We append a timestamp to bypass any stalled cache in the Docs Viewer
       const src = type === 'pdf'
-        ? `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`
+        ? `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true&_nocache=${Date.now()}`
         : url;
+      
+      // Visual feedback while the heavy iframe loads
+      viewerFrame.style.opacity = '0';
+      viewerFrame.style.transition = 'opacity 0.4s ease';
       viewerFrame.src = '';
-      setTimeout(() => { viewerFrame.src = src; }, 50);
+      
+      setTimeout(() => { 
+        viewerFrame.src = src; 
+        viewerFrame.onload = () => { viewerFrame.style.opacity = '1'; };
+      }, 50);
     }
     openModal('viewerModal');
   };
