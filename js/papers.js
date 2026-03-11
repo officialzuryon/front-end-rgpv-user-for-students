@@ -160,8 +160,8 @@
     renderFilterCount();
     currentPage = 1;
     renderResults();
-    // Scroll to results so the user sees them after filtering
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Removed automatic scroll to top unprompted
+    // window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function sortPapers() {
