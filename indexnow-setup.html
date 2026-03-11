@@ -1,0 +1,24 @@
+<!-- Bing IndexNow Integration Script
+     
+     HOW TO ACTIVATE:
+     1. Go to https://www.bing.com/indexnow/getstarted
+     2. Get your unique key
+     3. Replace YOUR_INDEXNOW_KEY_HERE in indexnow-key.txt
+     4. Rename the file to YOUR_INDEXNOW_KEY_HERE.txt (use the actual key as filename)
+     5. Add this meta tag to all pages: <meta name="indexnow-key" content="YOUR_KEY">
+     
+     Bing IndexNow API Endpoint:
+     https://api.indexnow.org/indexnow?url=https://rgpvpapers.vercel.app/&key=YOUR_KEY
+     
+     You can ping multiple URLs at once via POST:
+     POST https://api.indexnow.org/indexnow
+     {
+       "host": "rgpvpapers.vercel.app",
+       "key": "YOUR_KEY",
+       "urlList": [
+         "https://rgpvpapers.vercel.app/",
+         "https://rgpvpapers.vercel.app/papers.html",
+         "https://rgpvpapers.vercel.app/blog.html"
+       ]
+     }
+-->

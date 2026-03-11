@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blog Post | RGPV Papers</title>
+  <meta name="description" content="Read student tips, exam guides and RGPV paper analysis on the RGPV Papers blog."/>
+  <meta name="robots" content="index, follow"/>
+  <link rel="canonical" href="https://rgpvpapers.vercel.app/blog-post.html"/>
+  <meta property="og:type" content="article"/>
+  <meta property="og:title" content="Blog Post | RGPV Papers"/>
+  <meta property="og:image" content="https://rgpvpapers.vercel.app/assets/og-image.jpg"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .post-layout { display: grid; grid-template-columns: 1fr 320px; gap: 40px; align-items: start; }
+    .post-hero { background: var(--gradient-card); border-radius: var(--radius-xl); padding: 48px 40px; text-align: center; font-size: 5rem; margin-bottom: 32px; border: 1px solid var(--border); }
+    .post-article { background: #fff; border-radius: var(--radius-xl); border: 1px solid var(--border); padding: 40px; box-shadow: var(--shadow-sm); }
+    .post-article h1 { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 800; line-height: 1.25; margin-bottom: 14px; }
+    .post-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid var(--border); flex-wrap: wrap; color: var(--text-muted); font-size: 0.88rem; }
+    .post-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
+    #postBody { line-height: 1.85; color: var(--text-secondary); }
+    #postBody h2 { font-size: 1.4rem; font-weight: 700; color: var(--text-primary); margin: 28px 0 12px; }
+    #postBody h3 { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin: 20px 0 8px; }
+    #postBody p { margin-bottom: 16px; }
+    #postBody ul, #postBody ol { margin: 16px 0 16px 24px; }
+    #postBody li { margin-bottom: 8px; }
+    #postBody strong { color: var(--text-primary); }
+    #postBody blockquote { border-left: 4px solid var(--primary); padding: 14px 20px; background: rgba(108,58,224,0.06); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin: 20px 0; font-style: italic; }
+    .sidebar-widget { background: #fff; border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 24px; box-shadow: var(--shadow-sm); margin-bottom: 24px; }
+    .sidebar-widget h3 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; color: var(--text-primary); }
+    .share-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+    .share-btn { flex: 1; min-width: 80px; padding: 9px 12px; border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 600; text-align: center; border: 1.5px solid var(--border); color: var(--text-secondary); transition: var(--transition); cursor: pointer; }
+    .share-btn:hover { border-color: var(--primary); color: var(--primary); }
+    @media (max-width: 900px) { .post-layout { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<nav class="navbar" id="navbar" role="navigation" aria-label="Main navigation">
+  <div class="container nav-inner">
+    <a href="index.html" class="nav-logo" aria-label="RGPV Papers Home">
+      <div class="logo-icon" aria-hidden="true">📄</div>
+      <div class="logo-text"><span>RGPV</span> Papers</div>
+    </a>
+    <ul class="nav-links" role="list">
+      <li><a href="index.html">Home</a></li><li><a href="papers.html">Papers</a></li>
+      <li><a href="blog.html" class="active">Blog</a></li><li><a href="about.html">About</a></li><li><a href="contact.html">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="papers.html" class="btn btn-primary btn-sm">🔍 Search Papers</a>
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu" role="navigation">
+  <a href="index.html">🏠 Home</a><a href="papers.html">📄 Papers</a><a href="blog.html">✍️ Blog</a><a href="about.html">ℹ️ About</a><a href="contact.html">📧 Contact</a>
+</div>
+
+<main class="section-padding" style="padding-top:calc(var(--nav-height) + 32px);">
+  <div class="container" id="postContent">
+    <div class="post-layout">
+      <div>
+        <nav class="breadcrumb" aria-label="Breadcrumb" style="justify-content:flex-start; margin-bottom:24px;">
+          <a href="index.html">Home</a> <span>›</span> <a href="blog.html">Blog</a> <span>›</span> <span>Post</span>
+        </nav>
+        <div class="post-article">
+          <div class="loading-center" id="postLoading" role="status"><div class="spinner"></div><span>Loading post…</span></div>
+          <h1 id="postTitle" style="display:none"></h1>
+          <div class="post-meta" id="postMeta" style="display:none"></div>
+          <div id="postBody"></div>
+          <div class="post-tags" id="postTags"></div>
+        </div>
+      </div>
+      <aside>
+        <div class="sidebar-widget">
+          <h3>📄 Browse Papers</h3>
+          <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:14px;">Looking for RGPV question papers? Search our full library.</p>
+          <a href="papers.html" class="btn btn-primary" style="width:100%;justify-content:center;">Browse Papers →</a>
+        </div>
+        <div class="sidebar-widget">
+          <h3>🔗 Share This Post</h3>
+          <div class="share-btns">
+            <button class="share-btn" onclick="sharePost('whatsapp')" aria-label="Share on WhatsApp">📲 WhatsApp</button>
+            <button class="share-btn" onclick="sharePost('twitter')" aria-label="Share on Twitter">𝕏 Twitter</button>
+            <button class="share-btn" onclick="sharePost('copy')" aria-label="Copy link">🔗 Copy</button>
+          </div>
+        </div>
+        <div class="sidebar-widget">
+          <h3>✉️ Contact Us</h3>
+          <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:12px;">Have a question or suggestion?</p>
+          <a href="contact.html" class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;">Get in Touch</a>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<footer class="footer" role="contentinfo">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-about">
+        <div class="footer-logo"><div class="logo-icon" aria-hidden="true">📄</div><span style="color:#fff;font-weight:800;"><span style="color:var(--primary-light)">RGPV</span> Papers</span></div>
+        <p>Free previous year question papers for RGPV students.</p>
+      </div>
+      <div class="footer-col"><h4>Links</h4><ul>
+        <li><a href="index.html">Home</a></li><li><a href="papers.html">Papers</a></li><li><a href="blog.html">Blog</a></li><li><a href="privacy-policy.html">Privacy</a></li>
+      </ul></div>
+      <div class="footer-col"><h4>Contact</h4><a href="mailto:customerservice.filezone@gmail.com" style="font-size:0.82rem;color:var(--primary-light);">customerservice.filezone@gmail.com</a></div>
+    </div>
+    <div class="footer-bottom"><p>© <span id="currentYear"></span> RGPV Papers. All rights reserved.</p></div>
+  </div>
+</footer>
+<button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js" defer></script>
+<script src="js/firebase-config.js" defer></script>
+<script src="js/main.js" defer></script>
+<script src="js/blog.js" defer></script>
+<script>
+function sharePost(platform) {
+  const url = window.location.href;
+  const title = document.getElementById('postTitle')?.textContent || 'Check this out';
+  if (platform === 'whatsapp') window.open(`https://wa.me/?text=${encodeURIComponent(title+' — '+url)}`,'_blank');
+  else if (platform === 'twitter') window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,'_blank');
+  else if (platform === 'copy') { navigator.clipboard.writeText(url).then(() => showToast('Link copied!','success')); }
+}
+// Show post content once loaded
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    const loading = document.getElementById('postLoading');
+    const title = document.getElementById('postTitle');
+    const meta = document.getElementById('postMeta');
+    if (loading && title && title.textContent) { loading.style.display='none'; title.style.display=''; meta.style.display='flex'; }
+  }, 2000);
+});
+</script>
+</body>
+</html>
