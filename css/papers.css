@@ -187,7 +187,13 @@
 @media (max-width: 1024px) {
   .papers-layout { grid-template-columns: 1fr; }
   .papers-sidebar { position: static; }
-  .search-panel { position: static; }
+  .search-panel {
+    position: sticky;
+    top: calc(var(--nav-height, 70px) + 8px);
+    /* Collapse to a smaller size on mid screens */
+    padding: 18px;
+    margin-bottom: 20px;
+  }
 }
 @media (max-width: 640px) {
   .filter-grid { grid-template-columns: 1fr 1fr; }
