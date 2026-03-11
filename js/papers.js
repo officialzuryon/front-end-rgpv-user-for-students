@@ -273,8 +273,10 @@
     if (!url) { showToast('Paper not available yet.', 'error'); return; }
     if (viewerTitle) viewerTitle.textContent = title;
     if (viewerFrame) {
-      // Append parameters to disable toolbar/download in PDF viewers
-      const src = type === 'pdf' ? `${url}#toolbar=0&navpanes=0&scrollbar=1&view=FitH` : url;
+      // Use Google Docs Viewer for PDFs to prevent Chrome from blocking the iframe
+      const src = type === 'pdf'
+        ? `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`
+        : url;
       viewerFrame.src = '';
       setTimeout(() => { viewerFrame.src = src; }, 50);
     }
