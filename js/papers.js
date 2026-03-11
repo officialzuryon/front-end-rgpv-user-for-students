@@ -87,8 +87,9 @@
   }
 
   // ─── Filter & Sort ──────────────────────
+  let activeSearchQuery = '';
+
   function applyFilters() {
-    const q = (globalSearch?.value || '').toLowerCase().trim();
     const uId = filterUniversity?.value || '';
     const bId = filterBranch?.value || '';
     const sem = filterSemester?.value || '';
@@ -97,6 +98,7 @@
     const subj = (filterSubject?.value || '').toLowerCase().trim();
 
     activeFilters = {};
+    if (activeSearchQuery) activeFilters.search = `"${activeSearchQuery}"`;
     if (uId) { const u = universities.find(x => x.id === uId); activeFilters.university = u?.name || uId; }
     if (bId) { const b = branches.find(x => x.id === bId); activeFilters.branch = b?.name || bId; }
     if (sem) activeFilters.semester = `Sem ${sem}`;
@@ -104,7 +106,9 @@
     if (code) activeFilters.code = code.toUpperCase();
     if (subj) activeFilters.subject = subj;
 
-    filteredPapers = allPapers.filter(p => {
+    const queryTokens = activeSearchQuery ? activeSearchQuery.split(/\s+/).filter(Boolean) : [];
+
+    filteredPapers = allPapers.map(p => {
       const title = (p.title || '').toLowerCase();
       const pCode = (p.code || '').toLowerCase();
       const pSubject = (p.subject || '').toLowerCase();
@@ -113,7 +117,6 @@
       const pSem = String(p.semester || '');
       const pYear = String(p.year || '');
 
-      const matchQ = !q || title.includes(q) || pCode.includes(q) || pSubject.includes(q);
       const matchU = !uId || pUniv === uId;
       const matchB = !bId || pBranch === bId;
       const matchS = !sem || pSem === sem;
@@ -121,8 +124,36 @@
       const matchC = !code || pCode.includes(code);
       const matchSub = !subj || pSubject.includes(subj);
 
-      return matchQ && matchU && matchB && matchS && matchY && matchC && matchSub;
-    });
+      // Relevance Scoring for fuzzy search
+      let searchScore = 0;
+      if (queryTokens.length > 0) {
+        let tokenMatches = 0;
+        queryTokens.forEach(token => {
+          let matched = false;
+          // Exact matches are worth the most
+          if (pCode === token) { searchScore += 10; matched = true; }
+          else if (pCode.includes(token)) { searchScore += 5; matched = true; }
+          
+          if (pSubject === token) { searchScore += 8; matched = true; }
+          else if (pSubject.includes(token)) { searchScore += 4; matched = true; }
+          
+          if (title === token) { searchScore += 6; matched = true; }
+          else if (title.includes(token)) { searchScore += 3; matched = true; }
+          
+          if (matched) tokenMatches++;
+        });
+        
+        // If a query exists, it MUST match at least partially (score > 0)
+        // You can make this stricter by requiring (tokenMatches === queryTokens.length)
+        if (searchScore === 0) return null; 
+      }
+
+      // If it passes dropdown filters
+      if (matchU && matchB && matchS && matchY && matchC && matchSub) {
+        return { ...p, searchScore }; // Attach calculated score for sorting
+      }
+      return null;
+    }).filter(Boolean); // Drop nulls
 
     sortPapers();
     renderActiveFilters();
@@ -141,7 +172,14 @@
       year: p => parseInt(p.year) || 0,
     };
     const getter = fieldMap[sortField] || fieldMap.title;
+    
     filteredPapers.sort((a, b) => {
+      // Primary Sort: If a global search query is active, always rank by score first
+      if (activeSearchQuery && a.searchScore !== b.searchScore) {
+        return b.searchScore - a.searchScore; // Highest score first
+      }
+      
+      // Secondary Sort (or Primary if no search): User selected dropdown
       const va = getter(a), vb = getter(b);
       if (va < vb) return sortDir === 'asc' ? -1 : 1;
       if (va > vb) return sortDir === 'asc' ? 1 : -1;
@@ -256,15 +294,27 @@
   }
 
   window.clearFilter = (key) => {
-    const map = { university: filterUniversity, branch: filterBranch, semester: filterSemester, year: filterYear, code: filterCode, subject: filterSubject };
-    if (map[key]) { map[key].value = ''; if (key === 'university') loadBranches(); }
+    if (key === 'search') {
+      activeSearchQuery = '';
+      if (globalSearch) {
+        globalSearch.value = '';
+        globalSearch.closest('.global-search-container')?.querySelector('.global-search-wrap')?.classList.remove('has-value');
+      }
+    } else {
+      const map = { university: filterUniversity, branch: filterBranch, semester: filterSemester, year: filterYear, code: filterCode, subject: filterSubject };
+      if (map[key]) { map[key].value = ''; if (key === 'university') loadBranches(); }
+    }
     applyFilters();
   };
 
   if (clearAllBtn) {
     clearAllBtn.addEventListener('click', () => {
       [filterUniversity, filterBranch, filterSemester, filterYear, filterCode, filterSubject].forEach(el => { if (el) el.value = ''; });
-      if (globalSearch) globalSearch.value = '';
+      activeSearchQuery = '';
+      if (globalSearch) {
+        globalSearch.value = '';
+        globalSearch.closest('.global-search-container')?.querySelector('.global-search-wrap')?.classList.remove('has-value');
+      }
       loadBranches();
       applyFilters();
     });
@@ -335,22 +385,43 @@
   });
 
   // ─── Search/Filter Events ───────────────
-  let searchTimeout;
+  const searchPapersBtn = document.getElementById('searchPapersBtn');
+  
+  function triggerGlobalSearch() {
+    if (!globalSearch) return;
+    const val = globalSearch.value.trim().toLowerCase();
+    activeSearchQuery = val;
+    applyFilters();
+  }
+
   if (globalSearch) {
+    // Only handle UI state on input. Do NOT trigger applyFilters.
     globalSearch.addEventListener('input', () => {
-      const wrap = globalSearch.closest('.global-search-wrap');
+      const wrap = globalSearch.closest('.global-search-container')?.querySelector('.global-search-wrap');
       if (wrap) wrap.classList.toggle('has-value', !!globalSearch.value);
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(applyFilters, 280);
     });
+    
+    // Trigger on Enter key
+    globalSearch.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        triggerGlobalSearch();
+      }
+    });
+
     const clearInputBtn = globalSearch.parentElement?.querySelector('.clear-input-btn');
     if (clearInputBtn) {
       clearInputBtn.addEventListener('click', () => {
         globalSearch.value = '';
-        globalSearch.closest('.global-search-wrap')?.classList.remove('has-value');
+        activeSearchQuery = '';
+        globalSearch.closest('.global-search-container')?.querySelector('.global-search-wrap')?.classList.remove('has-value');
         applyFilters();
       });
     }
+  }
+
+  if (searchPapersBtn) {
+    searchPapersBtn.addEventListener('click', triggerGlobalSearch);
   }
 
   [filterUniversity, filterBranch, filterSemester, filterYear].forEach(el => {
