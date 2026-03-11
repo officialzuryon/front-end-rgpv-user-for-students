@@ -10,8 +10,7 @@
   box-shadow: var(--shadow-md);
   padding: 28px;
   margin-bottom: 32px;
-  position: sticky;
-  top: calc(var(--nav-height) + 16px);
+  position: relative;
   z-index: 999;
 }
 .search-panel-header {
@@ -188,8 +187,8 @@
   .papers-layout { grid-template-columns: 1fr; }
   .papers-sidebar { position: static; }
   .search-panel {
-    position: sticky;
-    top: calc(var(--nav-height, 70px) + 8px);
+    /* position: relative so it stays in content flow */
+    position: relative;
     /* Collapse to a smaller size on mid screens */
     padding: 18px;
     margin-bottom: 20px;
