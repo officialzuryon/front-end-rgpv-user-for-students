@@ -1,12 +1,7 @@
 {
   "version": 2,
   "name": "RGPV Papers Frontend",
-  "builds": [
-    {
-      "src": "**/*.html",
-      "use": "@vercel/static"
-    }
-  ],
+
   "routes": [
     {
       "src": "/",
