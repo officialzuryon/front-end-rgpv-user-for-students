@@ -6,6 +6,7 @@
  * 
  * These static pages are crawlable by Google/Bing and target
  * specific long-tail keywords like "RGPV data structures paper"
+ * or specific codes like "RGPV AL 305"
  */
 
 const fs = require('fs');
@@ -18,9 +19,15 @@ const outDir = path.join(__dirname, '..', 'papers');
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
 function generatePage(subject) {
-  const { slug, title, code, semester, branch, keywords, description, topics, faq } = subject;
+  const { slug, title, codes, semester, branch, keywords, description, topics, faq } = subject;
   const pageUrl = `${DOMAIN}/papers/${slug}`;
-  const fullTitle = `RGPV ${title} Previous Year Papers | ${code} | Free PDF View`;
+  const primaryCode = codes[0];
+  const allCodesDisplay = codes.filter((c, i, a) => a.indexOf(c) === i).slice(0, 4).join(', ');
+  const fullTitle = `RGPV ${title} Previous Year Papers | ${allCodesDisplay} | Free PDF View`;
+
+  // Build codes array for JavaScript (for Firebase matching)
+  const codesArrayStr = JSON.stringify(codes.map(c => c.toLowerCase().replace(/[\\s-]/g, '')));
+  const codesDisplayStr = JSON.stringify(codes);
 
   const faqSchemaItems = faq.map((f, i) => `{
         "@type": "Question",
@@ -77,7 +84,8 @@ function generatePage(subject) {
     "about": {
       "@type": "Course",
       "name": "${title}",
-      "courseCode": "${code}",
+      "courseCode": "${primaryCode}",
+      "alternateName": [${codes.map(c => `"${c}"`).join(', ')}],
       "provider": {
         "@type": "Organization",
         "name": "RGPV - Rajiv Gandhi Proudyogiki Vishwavidyalaya"
@@ -105,6 +113,7 @@ function generatePage(subject) {
     .subject-hero h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: var(--text-primary); }
     .topic-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
     .topic-chip { padding: 6px 14px; border-radius: var(--radius-pill); background: rgba(108,58,224,0.1); color: var(--primary); font-size: 0.78rem; font-weight: 600; }
+    .code-chip { padding: 6px 14px; border-radius: var(--radius-pill); background: rgba(0,180,216,0.1); color: var(--secondary-dark); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.5px; }
     .subject-meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; margin-top: 18px; }
     .subject-meta-item { background: #fff; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; }
     .subject-meta-item label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); display: block; margin-bottom: 2px; }
@@ -171,8 +180,8 @@ function generatePage(subject) {
       <h2>📋 Subject Details</h2>
       <div class="subject-meta">
         <div class="subject-meta-item">
-          <label>Paper Code</label>
-          <span>${code}</span>
+          <label>Paper Codes</label>
+          <span>${allCodesDisplay}</span>
         </div>
         <div class="subject-meta-item">
           <label>Semester</label>
@@ -186,6 +195,10 @@ function generatePage(subject) {
           <label>University</label>
           <span>RGPV</span>
         </div>
+      </div>
+      <h2 style="margin-top: 20px;">🏷️ Known Paper Codes for ${title}</h2>
+      <div class="topic-chips" style="margin-top: 10px;">
+        ${codes.map(c => `<span class="code-chip">${c}</span>`).join('\n        ')}
       </div>
       <h2 style="margin-top: 20px;">📚 Topics Covered</h2>
       <div class="topic-chips">
@@ -214,16 +227,17 @@ function generatePage(subject) {
 
     <!-- FAQ Section (SEO rich snippet) -->
     <section class="faq-section">
-      <h2>❓ Frequently Asked Questions</h2>
+      <h2>❓ Frequently Asked Questions about RGPV ${title}</h2>
       ${faqHtml}
     </section>
 
     <!-- SEO Content Block -->
     <section class="seo-content">
-      <h2>About RGPV ${title} (${code}) Question Papers</h2>
-      <p>RGPV ${title} is a core subject offered in Semester ${semester} for ${branch} students at Rajiv Gandhi Proudyogiki Vishwavidyalaya (RGPV), Bhopal. The paper code ${code} covers fundamental concepts that are essential for building a strong foundation in ${title.toLowerCase()}.</p>
+      <h2>About RGPV ${title} (${allCodesDisplay}) Question Papers</h2>
+      <p>RGPV ${title} is a core subject offered in Semester ${semester} for ${branch} students at Rajiv Gandhi Proudyogiki Vishwavidyalaya (RGPV), Bhopal. This subject is identified by paper codes <strong>${allCodesDisplay}</strong> across different batches and branches.</p>
+      <p>Students searching for <strong>RGPV ${primaryCode} paper</strong>, <strong>RGPV ${title} question paper</strong>, or <strong>RGPV ${title} previous year paper</strong> will find all available papers on this page. We match papers by paper code (${allCodesDisplay}) as well as by subject name.</p>
       <p>Practicing previous year question papers is the most effective strategy for RGPV exam preparation. Our collection of ${title} papers helps you understand the exam pattern, identify frequently asked topics, and improve your time management skills.</p>
-      <p>All papers on RGPV Papers are <strong>completely free to view</strong> — no downloads, no sign-ups. Just open and start studying. We update our library regularly with the latest exam papers.</p>
+      <p>All papers on RGPV Papers (rgpvpyq.co.in) are <strong>completely free to view</strong> — no downloads, no sign-ups. Just open and start studying. We update our library regularly with the latest exam papers.</p>
     </section>
 
   </div>
@@ -265,11 +279,16 @@ function generatePage(subject) {
 <script src="../js/firebase-config.js" defer></script>
 <script src="../js/main.js" defer></script>
 <script>
-  // Load papers for this subject from Firebase
+  // Load papers matching ANY of this subject's codes
   (function() {
-    const subjectCode = '${code}';
+    const subjectCodes = ${codesDisplayStr};
     const subjectTitle = '${title}';
+    // Normalized codes for fuzzy matching (no spaces, dashes, lowercase)
+    const normalizedCodes = ${codesArrayStr};
 
+    function normalize(str) {
+      return String(str).toLowerCase().replace(/[\\s\\-]/g, '');
+    }
     function escHtml(str) {
       return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
@@ -282,36 +301,29 @@ function generatePage(subject) {
       const empty = document.getElementById('papersEmpty');
       const count = document.getElementById('resultsCount');
 
+      // Fetch all papers and match by code OR subject name
       db.collection('papers')
-        .where('code', '==', subjectCode)
-        .orderBy('year', 'desc')
+        .orderBy('createdAt', 'desc')
         .get()
         .then(snap => {
-          // Also try matching by subject/title field
-          return db.collection('papers')
-            .orderBy('createdAt', 'desc')
-            .get()
-            .then(allSnap => {
-              const codeMatches = snap.docs.map(d => ({id: d.id, ...d.data()}));
-              const titleLower = subjectTitle.toLowerCase();
-              const titleMatches = allSnap.docs
-                .filter(d => {
-                  const data = d.data();
-                  const t = (data.title || '').toLowerCase();
-                  const s = (data.subject || '').toLowerCase();
-                  const c = (data.code || '').toLowerCase();
-                  return t.includes(titleLower) || s.includes(titleLower) || c === subjectCode.toLowerCase();
-                })
-                .map(d => ({id: d.id, ...d.data()}));
+          const titleLower = subjectTitle.toLowerCase();
+          const papers = snap.docs
+            .filter(d => {
+              const data = d.data();
+              const paperCode = normalize(data.code || '');
+              const paperTitle = (data.title || '').toLowerCase();
+              const paperSubject = (data.subject || '').toLowerCase();
 
-              // Merge and deduplicate
-              const seen = new Set();
-              const papers = [];
-              [...codeMatches, ...titleMatches].forEach(p => {
-                if (!seen.has(p.id)) { seen.add(p.id); papers.push(p); }
-              });
-              return papers;
-            });
+              // Match if paper code matches ANY of our codes
+              const codeMatch = normalizedCodes.some(nc => paperCode === nc || paperCode.includes(nc) || nc.includes(paperCode));
+              // Match if paper title/subject contains our subject name
+              const nameMatch = paperTitle.includes(titleLower) || paperSubject.includes(titleLower);
+
+              return codeMatch || nameMatch;
+            })
+            .map(d => ({id: d.id, ...d.data()}));
+
+          return papers;
         })
         .then(papers => {
           if (loading) loading.style.display = 'none';
@@ -355,10 +367,10 @@ function generatePage(subject) {
 let sitemapEntries = '';
 subjects.forEach(subject => {
   const html = generatePage(subject);
-  const filePath = path.join(outDir, `${subject.slug}.html`);
+  const filePath = path.join(outDir, subject.slug + '.html');
   fs.writeFileSync(filePath, html, 'utf-8');
-  console.log(`✅ Generated: papers/${subject.slug}.html`);
-  sitemapEntries += `\n  <url>\n    <loc>${DOMAIN}/papers/${subject.slug}</loc>\n    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.85</priority>\n  </url>`;
+  console.log('Generated: papers/' + subject.slug + '.html (codes: ' + subject.codes.join(', ') + ')');
+  sitemapEntries += '\n  <url>\n    <loc>' + DOMAIN + '/papers/' + subject.slug + '</loc>\n    <lastmod>' + new Date().toISOString().split('T')[0] + '</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.85</priority>\n  </url>';
 });
 
 // Update sitemap.xml with new pages
@@ -367,7 +379,7 @@ let sitemap = fs.readFileSync(sitemapPath, 'utf-8');
 // Remove previous subject entries if any
 sitemap = sitemap.replace(/\n  <!-- SUBJECT PAGES -->[\s\S]*?<!-- \/SUBJECT PAGES -->/g, '');
 // Insert before closing tag
-sitemap = sitemap.replace('</urlset>', `\n  <!-- SUBJECT PAGES -->${sitemapEntries}\n  <!-- /SUBJECT PAGES -->\n\n</urlset>`);
+sitemap = sitemap.replace('</urlset>', '\n  <!-- SUBJECT PAGES -->' + sitemapEntries + '\n  <!-- /SUBJECT PAGES -->\n\n</urlset>');
 fs.writeFileSync(sitemapPath, sitemap, 'utf-8');
-console.log(`\n✅ Updated sitemap.xml with ${subjects.length} subject page entries`);
-console.log(`\n🎉 Done! Generated ${subjects.length} subject landing pages.`);
+console.log('\nUpdated sitemap.xml with ' + subjects.length + ' subject page entries');
+console.log('\nDone! Generated ' + subjects.length + ' subject landing pages.');
