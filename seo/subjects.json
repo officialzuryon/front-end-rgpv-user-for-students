@@ -1,0 +1,170 @@
+[
+  {
+    "slug": "data-structures",
+    "title": "Data Structures",
+    "code": "CS-301",
+    "semester": "3",
+    "branch": "Computer Science",
+    "keywords": "RGPV data structures paper, CS-301 previous year paper, data structures question paper RGPV, linked list stack queue paper",
+    "description": "Access all RGPV Data Structures (CS-301) previous year question papers. Topics include arrays, linked lists, stacks, queues, trees, graphs, sorting, and hashing.",
+    "topics": ["Arrays & Strings", "Linked Lists", "Stacks & Queues", "Trees & Binary Trees", "Graphs & Traversals", "Sorting & Searching", "Hashing"],
+    "faq": [
+      {"q": "What topics are covered in RGPV Data Structures paper?", "a": "The RGPV Data Structures paper (CS-301) covers arrays, linked lists, stacks, queues, trees, binary search trees, graphs, sorting algorithms, searching techniques, and hashing."},
+      {"q": "How to prepare for RGPV Data Structures exam?", "a": "Focus on understanding core data structures, practice coding implementations, solve previous year papers available on this page, and pay special attention to tree traversals and graph algorithms which are frequently asked."}
+    ]
+  },
+  {
+    "slug": "engineering-mathematics",
+    "title": "Engineering Mathematics",
+    "code": "MA-101",
+    "semester": "1",
+    "branch": "All Branches",
+    "keywords": "RGPV engineering mathematics paper, MA-101 question paper, maths previous year paper RGPV, engineering maths RGPV",
+    "description": "Download and view RGPV Engineering Mathematics (MA-101) previous year question papers. Covers calculus, linear algebra, differential equations and more.",
+    "topics": ["Differential Calculus", "Integral Calculus", "Linear Algebra", "Differential Equations", "Laplace Transform", "Fourier Series"],
+    "faq": [
+      {"q": "Is RGPV Engineering Mathematics difficult?", "a": "Engineering Mathematics requires consistent practice. Solving previous year papers is the best strategy — most questions repeat in pattern. Focus on calculus and differential equations."},
+      {"q": "Which topics are most important for RGPV Maths?", "a": "Differential equations, Laplace transforms, and matrix operations are the most frequently asked topics in RGPV Engineering Mathematics papers."}
+    ]
+  },
+  {
+    "slug": "english",
+    "title": "English / Communication Skills",
+    "code": "HU-101",
+    "semester": "1",
+    "branch": "All Branches",
+    "keywords": "RGPV english paper, RGPV communication skills paper, HU-101 question paper, english previous year paper RGPV",
+    "description": "View RGPV English / Communication Skills (HU-101) previous year question papers. Covers grammar, comprehension, technical writing, and communication theory.",
+    "topics": ["Grammar & Usage", "Reading Comprehension", "Technical Writing", "Communication Theory", "Vocabulary", "Essay Writing"],
+    "faq": [
+      {"q": "What is the pattern of RGPV English paper?", "a": "The RGPV English paper typically includes grammar (fill in the blanks, error correction), reading comprehension, short notes on communication topics, essay writing, and technical writing exercises."},
+      {"q": "How to score well in RGPV English exam?", "a": "Practice grammar exercises, read previous year papers for common question patterns, prepare short notes on communication theory topics, and practice essay writing on common topics."}
+    ]
+  },
+  {
+    "slug": "computer-networks",
+    "title": "Computer Networks",
+    "code": "CS-501",
+    "semester": "5",
+    "branch": "Computer Science",
+    "keywords": "RGPV computer networks paper, CS-501 question paper, CN previous year paper RGPV, networking question paper",
+    "description": "Access RGPV Computer Networks (CS-501) previous year question papers. Topics include OSI model, TCP/IP, routing, switching, and network security.",
+    "topics": ["OSI & TCP/IP Models", "Data Link Layer", "Network Layer & Routing", "Transport Layer (TCP/UDP)", "Application Layer Protocols", "Network Security"],
+    "faq": [
+      {"q": "What are important topics for RGPV Computer Networks?", "a": "OSI model layers, TCP/IP protocol suite, routing algorithms (Dijkstra, Distance Vector), subnetting, TCP vs UDP, and DNS are the most frequently asked topics."},
+      {"q": "How many questions repeat in RGPV CN paper?", "a": "Around 40-60% of questions follow similar patterns from previous years. Solving 3-4 years of previous papers gives you excellent coverage."}
+    ]
+  },
+  {
+    "slug": "dbms",
+    "title": "Database Management Systems",
+    "code": "CS-401",
+    "semester": "4",
+    "branch": "Computer Science",
+    "keywords": "RGPV DBMS paper, CS-401 question paper, database management paper RGPV, SQL previous year paper",
+    "description": "View RGPV DBMS (CS-401) previous year question papers. Covers ER diagrams, SQL, normalization, transactions, and indexing.",
+    "topics": ["ER Model & Relational Model", "SQL Queries", "Normalization", "Transaction Management", "Concurrency Control", "Indexing & B-Trees"],
+    "faq": [
+      {"q": "What topics are most important in RGPV DBMS paper?", "a": "SQL queries, normalization (up to 3NF/BCNF), ER diagrams, and transaction management (ACID properties) are the most frequently asked topics."},
+      {"q": "How to prepare for RGPV DBMS exam?", "a": "Practice SQL queries, learn to draw ER diagrams, understand normalization with examples, and study previous year papers for repeated question patterns."}
+    ]
+  },
+  {
+    "slug": "operating-systems",
+    "title": "Operating Systems",
+    "code": "CS-502",
+    "semester": "5",
+    "branch": "Computer Science",
+    "keywords": "RGPV operating systems paper, CS-502 question paper, OS previous year paper RGPV, process scheduling paper",
+    "description": "Access RGPV Operating Systems (CS-502) previous year question papers. Topics include process management, memory management, file systems, and deadlocks.",
+    "topics": ["Process Management", "CPU Scheduling", "Memory Management", "Virtual Memory", "Deadlocks", "File Systems"],
+    "faq": [
+      {"q": "What are key topics for RGPV Operating Systems exam?", "a": "CPU scheduling algorithms (FCFS, SJF, Round Robin), deadlock detection and prevention, paging and segmentation, and process synchronization are the most important topics."},
+      {"q": "Are numerical problems asked in RGPV OS paper?", "a": "Yes, numerical problems on CPU scheduling, page replacement algorithms, and disk scheduling are commonly asked. Practice these from previous year papers."}
+    ]
+  },
+  {
+    "slug": "object-oriented-programming",
+    "title": "Object Oriented Programming",
+    "code": "CS-302",
+    "semester": "3",
+    "branch": "Computer Science",
+    "keywords": "RGPV OOP paper, CS-302 question paper, object oriented programming RGPV, C++ Java paper RGPV",
+    "description": "View RGPV Object Oriented Programming (CS-302) previous year question papers. Covers classes, inheritance, polymorphism, and design patterns.",
+    "topics": ["Classes & Objects", "Inheritance", "Polymorphism", "Encapsulation & Abstraction", "Exception Handling", "Templates & STL"],
+    "faq": [
+      {"q": "Is RGPV OOP paper based on C++ or Java?", "a": "The RGPV OOP paper primarily covers C++ concepts, though some questions may reference Java. Focus on C++ syntax, classes, inheritance, and polymorphism."},
+      {"q": "What type of questions come in RGPV OOP paper?", "a": "Expect a mix of theory (explain concepts like polymorphism) and code-based questions (write a program using inheritance). Previous year papers show the exact pattern."}
+    ]
+  },
+  {
+    "slug": "digital-electronics",
+    "title": "Digital Electronics",
+    "code": "EC-301",
+    "semester": "3",
+    "branch": "Electronics & Communication",
+    "keywords": "RGPV digital electronics paper, EC-301 question paper, digital logic paper RGPV, boolean algebra paper",
+    "description": "Access RGPV Digital Electronics (EC-301) previous year papers. Covers number systems, Boolean algebra, logic gates, combinational and sequential circuits.",
+    "topics": ["Number Systems", "Boolean Algebra", "Logic Gates", "Combinational Circuits", "Sequential Circuits", "Flip-Flops & Counters"],
+    "faq": [
+      {"q": "What are important topics for RGPV Digital Electronics?", "a": "Boolean algebra simplification, K-maps, combinational circuits (multiplexer, decoder), flip-flops, and counters are the most frequently asked topics."},
+      {"q": "Are numerical problems important in Digital Electronics paper?", "a": "Yes, number system conversions, Boolean expression simplification, and K-map based questions are commonly asked numericals."}
+    ]
+  },
+  {
+    "slug": "discrete-mathematics",
+    "title": "Discrete Mathematics",
+    "code": "CS-402",
+    "semester": "4",
+    "branch": "Computer Science",
+    "keywords": "RGPV discrete mathematics paper, CS-402 question paper, discrete maths RGPV, graph theory paper RGPV",
+    "description": "View RGPV Discrete Mathematics (CS-402) previous year papers. Covers set theory, graph theory, combinatorics, logic, and algebraic structures.",
+    "topics": ["Set Theory", "Relations & Functions", "Graph Theory", "Combinatorics", "Propositional Logic", "Algebraic Structures"],
+    "faq": [
+      {"q": "What topics are frequently asked in RGPV Discrete Maths?", "a": "Graph theory (Euler/Hamilton paths), combinatorics (permutations/combinations), set theory operations, and propositional logic are the most common topics."},
+      {"q": "Is RGPV Discrete Mathematics tough?", "a": "It requires logical thinking but is scoring if you practice. Previous year papers show that many questions repeat in concept. Focus on graph theory and combinatorics."}
+    ]
+  },
+  {
+    "slug": "software-engineering",
+    "title": "Software Engineering",
+    "code": "CS-601",
+    "semester": "6",
+    "branch": "Computer Science",
+    "keywords": "RGPV software engineering paper, CS-601 question paper, SE previous year paper RGPV, SDLC paper RGPV",
+    "description": "Access RGPV Software Engineering (CS-601) previous year question papers. Covers SDLC models, requirement engineering, testing, and project management.",
+    "topics": ["SDLC Models", "Requirement Engineering", "Software Design", "Testing & Debugging", "Project Management", "Agile & DevOps"],
+    "faq": [
+      {"q": "What are key topics for RGPV Software Engineering exam?", "a": "SDLC models (Waterfall, Agile, Spiral), requirement engineering, UML diagrams, testing strategies (black box, white box), and project estimation (COCOMO) are most important."},
+      {"q": "Is Software Engineering a theory-heavy paper?", "a": "Yes, it is primarily theory-based. Focus on diagram-based answers (DFD, UML, ER diagrams) and comparison questions (Waterfall vs Agile) for better marks."}
+    ]
+  },
+  {
+    "slug": "physics",
+    "title": "Engineering Physics",
+    "code": "PH-101",
+    "semester": "1",
+    "branch": "All Branches",
+    "keywords": "RGPV physics paper, PH-101 question paper, engineering physics RGPV, physics previous year paper",
+    "description": "View RGPV Engineering Physics (PH-101) previous year papers. Covers optics, quantum mechanics, electromagnetic theory, and solid state physics.",
+    "topics": ["Optics & Interference", "Diffraction", "Quantum Mechanics", "Electromagnetic Theory", "Solid State Physics", "Laser & Fiber Optics"],
+    "faq": [
+      {"q": "What are important topics in RGPV Physics paper?", "a": "Interference and diffraction, laser physics, quantum mechanics basics, and electromagnetic wave theory are the most frequently asked topics."},
+      {"q": "Are derivations important in RGPV Physics?", "a": "Yes, derivations carry significant marks. Focus on key derivations from optics, quantum mechanics, and electromagnetic theory for maximum scoring."}
+    ]
+  },
+  {
+    "slug": "chemistry",
+    "title": "Engineering Chemistry",
+    "code": "CH-101",
+    "semester": "1",
+    "branch": "All Branches",
+    "keywords": "RGPV chemistry paper, CH-101 question paper, engineering chemistry RGPV, chemistry previous year paper",
+    "description": "Access RGPV Engineering Chemistry (CH-101) previous year papers. Covers water treatment, polymers, corrosion, fuels, and spectroscopy.",
+    "topics": ["Water Treatment", "Polymers", "Corrosion & Prevention", "Fuels & Combustion", "Spectroscopy", "Phase Rule"],
+    "faq": [
+      {"q": "What are scoring topics in RGPV Chemistry?", "a": "Water treatment (hardness, softening methods), polymers (types, properties), and corrosion (types, prevention methods) are the most scoring and frequently asked topics."},
+      {"q": "How to prepare for RGPV Chemistry in a short time?", "a": "Focus on water treatment, polymers, and corrosion — these three units cover 60-70% of the paper. Solve 3-4 years of previous papers for pattern recognition."}
+    ]
+  }
+]
