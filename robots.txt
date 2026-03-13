@@ -4,8 +4,5 @@ Allow: /
 # Disallow admin paths
 Disallow: /admin/
 
-# Sitemap location — replace YOUR-DOMAIN with your actual deployed domain
-Sitemap: https://YOUR-DOMAIN/sitemap.xml
-
-# Crawl-delay for polite crawling
-Crawl-delay: 10
+# Sitemap
+Sitemap: https://rgpvpyq.co.in/sitemap.xml

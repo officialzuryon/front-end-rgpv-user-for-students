@@ -320,32 +320,72 @@
     });
   }
 
-  // ─── Paper Viewer (Google Docs wrapper) ───
+  // ─── Paper Viewer (Google Docs wrapper with auto-retry) ───
+  let viewerRetryTimer = null;
+  let viewerLoadTimer = null;
+
+  function getViewerLoader() {
+    return viewerFrame?.closest('.modal-body')?.querySelector('.viewer-loader');
+  }
+
   window.openPaperViewer = (id, title, url, type) => {
     if (!url) { showToast('Paper not available yet.', 'error'); return; }
     if (viewerTitle) viewerTitle.textContent = title;
+
+    // Clear any pending timers from previous viewer session
+    clearTimeout(viewerRetryTimer);
+    clearTimeout(viewerLoadTimer);
+
     if (viewerFrame) {
-      // Use Google Docs Viewer for PDFs to prevent Chrome from blocking the cross-origin iframe
-      // We append a timestamp to bypass any stalled cache in the Docs Viewer
       const src = type === 'pdf'
-        ? `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true&_nocache=${Date.now()}`
+        ? `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`
         : url;
-      
-      // Visual feedback while the heavy iframe loads
+
+      // Show loading state
       viewerFrame.style.opacity = '0';
       viewerFrame.style.transition = 'opacity 0.4s ease';
       viewerFrame.src = '';
-      
-      setTimeout(() => { 
-        viewerFrame.src = src; 
-        viewerFrame.onload = () => { viewerFrame.style.opacity = '1'; };
-      }, 50);
+      const loader = getViewerLoader();
+      if (loader) loader.style.display = 'flex';
+
+      let loaded = false;
+      let retryCount = 0;
+      const MAX_RETRIES = 3;
+
+      function onFrameLoad() {
+        loaded = true;
+        clearTimeout(viewerRetryTimer);
+        viewerFrame.style.opacity = '1';
+        if (loader) loader.style.display = 'none';
+      }
+
+      function tryLoad() {
+        loaded = false;
+        viewerFrame.style.opacity = '0';
+        if (loader) loader.style.display = 'flex';
+        // Use a unique fragment to force iframe reload without busting Google's server cache
+        viewerFrame.src = src + '&_t=' + Date.now();
+        viewerFrame.onload = onFrameLoad;
+
+        // Auto-retry if not loaded after 5 seconds
+        viewerRetryTimer = setTimeout(() => {
+          if (!loaded && retryCount < MAX_RETRIES) {
+            retryCount++;
+            console.log(`PDF viewer: auto-retry ${retryCount}/${MAX_RETRIES}`);
+            tryLoad();
+          }
+        }, 5000);
+      }
+
+      setTimeout(tryLoad, 50);
     }
     openModal('viewerModal');
   };
 
   if (document.getElementById('closeViewer')) {
     document.getElementById('closeViewer').addEventListener('click', () => {
+      clearTimeout(viewerRetryTimer);
+      clearTimeout(viewerLoadTimer);
       closeModal('viewerModal');
       setTimeout(() => { if (viewerFrame) viewerFrame.src = ''; }, 300);
     });
