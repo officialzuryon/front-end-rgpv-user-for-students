@@ -30,6 +30,7 @@
   const filterYear = document.getElementById('filterYear');
   const filterCode = document.getElementById('filterCode');
   const filterSubject = document.getElementById('filterSubject');
+  const filterDegree = document.getElementById('filterDegree');
   const activeFiltersWrap = document.getElementById('activeFilters');
   const clearAllBtn = document.getElementById('clearAllFilters');
   const filterCountEl = document.getElementById('filterCount');
@@ -53,22 +54,116 @@
     } catch (e) { console.error('loadUniversities:', e); }
   }
 
-  // ─── Load Branches (filtered by university) ──
-  async function loadBranches(universityId = null) {
+  // ─── Degree → Course Mapping ──────────────
+  // Maps each degree to the course/branch names it covers.
+  // Branch names that match any of these (case-insensitive, partial match) will show.
+  const DEGREE_COURSES = {
+    'B.Tech': [
+      'Computer Science', 'Information Technology', 'Electronics', 'Electrical',
+      'Mechanical', 'Civil', 'Chemical', 'Biotechnology', 'Automobile',
+      'Mining', 'Industrial', 'Aeronautical', 'Instrumentation',
+      'Fire Technology', 'Textile', 'Polymer', 'Ceramic', 'Food Technology',
+      'Computer Science & Engineering', 'CSE', 'IT', 'ECE', 'EE', 'ME', 'CE',
+      'AI', 'Artificial Intelligence', 'Data Science', 'Cyber Security', 'IoT'
+    ],
+    'B.E.': [
+      'Computer Science', 'Information Technology', 'Electronics', 'Electrical',
+      'Mechanical', 'Civil', 'Chemical', 'Biotechnology',
+      'CSE', 'IT', 'ECE', 'EE', 'ME', 'CE'
+    ],
+    'BCA': ['BCA', 'Computer Application', 'Computer Applications'],
+    'MCA': ['MCA', 'Computer Application', 'Computer Applications'],
+    'M.Tech': [
+      'Computer Science', 'Information Technology', 'Electronics', 'Electrical',
+      'Mechanical', 'Civil', 'VLSI', 'Embedded', 'Software Engineering',
+      'Digital Communication', 'Power Systems', 'Structural', 'Thermal',
+      'CSE', 'IT', 'ECE', 'EE', 'ME', 'CE'
+    ],
+    'MBA': ['MBA', 'Business Administration', 'Management', 'Finance', 'Marketing', 'HR', 'Human Resource'],
+    'B.Sc': ['B.Sc', 'Physics', 'Chemistry', 'Mathematics', 'Biology', 'Computer Science', 'Zoology', 'Botany'],
+    'M.Sc': ['M.Sc', 'Physics', 'Chemistry', 'Mathematics', 'Computer Science', 'Biotechnology'],
+    'B.Pharm': ['B.Pharm', 'Pharmacy', 'Pharmaceutical'],
+    'Diploma': [
+      'Computer Science', 'Electronics', 'Electrical', 'Mechanical', 'Civil',
+      'Chemical', 'Mining', 'Automobile', 'CSE', 'IT', 'ECE', 'EE', 'ME', 'CE'
+    ]
+  };
+
+  // ─── Load Branches (filtered by degree ONLY) ──
+  let allBranchesCache = null; // cache all branches for faster filtering
+
+  async function loadBranches(universityId = null, degreeValue = null) {
     try {
-      let query = db.collection('branches').orderBy('name');
-      if (universityId) query = query.where('universityId', '==', universityId);
-      const snap = await query.get();
-      branches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // 1. Fetch once and cache globally to avoid Firebase Missing Index errors
+      if (!allBranchesCache) {
+        const snap = await db.collection('branches').orderBy('name').get();
+        allBranchesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      }
+
+      let branchList = [...allBranchesCache];
+
+      // 2. Filter by Degree Locally
+      if (degreeValue) {
+        const allowedCourses = DEGREE_COURSES[degreeValue] ? DEGREE_COURSES[degreeValue].map(c => c.toLowerCase()) : [];
+        branchList = branchList.filter(b => {
+          // If the branch explicitly has this degree assigned in the DB, it belongs here 100%
+          if (b.degree && b.degree === degreeValue) return true;
+          
+          // If it doesn't have an explicit degree, fallback to guessing via text mapping
+          if (allowedCourses.length > 0) {
+            const bName = (b.name || '').toLowerCase();
+            return allowedCourses.some(course => {
+              if (bName === course) return true;
+              // Strict word boundary to avoid "CE" matching "Science"
+              const regex = new RegExp(`(?:^|[^a-z0-9])${course.replace(/[-\\/\\\\^$*+?.()|[\\]{}]/g, '\\\\$&')}(?:[^a-z0-9]|$)`, 'i');
+              return regex.test(bName);
+            });
+          }
+          // If it has neither an explicit degree nor text mapping matching this degree, hide it
+          return false;
+        });
+      }
+
+      // Deduplicate branches by name before rendering options
+      const uniqueBranches = [];
+      const seen = new Set();
+      branchList.forEach(b => {
+        const name = (b.name || '').toLowerCase().trim();
+        if (!seen.has(name)) {
+          seen.add(name);
+          uniqueBranches.push(b);
+        }
+      });
+      branches = branchList; // keep all branches for lookups!
+      
       if (filterBranch) {
-        filterBranch.innerHTML = '<option value="">All Branches</option>';
-        branches.forEach(b => {
+        filterBranch.innerHTML = '<option value="">All Branches / Courses</option>';
+        uniqueBranches.forEach(b => {
           const opt = document.createElement('option');
           opt.value = b.id; opt.textContent = b.name;
           filterBranch.appendChild(opt);
         });
       }
     } catch (e) { console.error('loadBranches:', e); }
+  }
+
+  // ─── Load Degrees ────────────────────────
+  async function loadDegrees() {
+    if (!filterDegree) return;
+    try {
+      // Fetch without orderBy to prevent Missing Index crash
+      const snap = await db.collection('degrees').get();
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      
+      // Sort locally
+      docs.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      
+      docs.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.name; opt.textContent = d.name;
+        filterDegree.appendChild(opt);
+      });
+    } catch(e) { console.error('loadDegrees:', e); }
   }
 
   // ─── Load Papers ────────────────────────
@@ -96,6 +191,7 @@
     const yr = filterYear?.value || '';
     const code = (filterCode?.value || '').toLowerCase().trim();
     const subj = (filterSubject?.value || '').toLowerCase().trim();
+    const deg = (filterDegree?.value || '').toLowerCase().trim();
 
     activeFilters = {};
     if (activeSearchQuery) activeFilters.search = `"${activeSearchQuery}"`;
@@ -105,6 +201,7 @@
     if (yr) activeFilters.year = yr;
     if (code) activeFilters.code = code.toUpperCase();
     if (subj) activeFilters.subject = subj;
+    if (deg) activeFilters.degree = deg;
 
     const queryTokens = activeSearchQuery ? activeSearchQuery.split(/\s+/).filter(Boolean) : [];
 
@@ -118,11 +215,16 @@
       const pYear = String(p.year || '');
 
       const matchU = !uId || pUniv === uId;
-      const matchB = !bId || pBranch === bId;
+      
+      // Match by branch Name instead of ID, since branches are global per degree
+      let paperBranchName = (branches.find(b => b.id === pBranch)?.name || p.branch || '').toLowerCase().trim();
+      let selectedBranchName = (branches.find(b => b.id === bId)?.name || '').toLowerCase().trim();
+      const matchB = !bId || (paperBranchName === selectedBranchName);
       const matchS = !sem || pSem === sem;
       const matchY = !yr || pYear === yr;
       const matchC = !code || pCode.includes(code);
       const matchSub = !subj || pSubject.includes(subj);
+      const matchDeg = !deg || (p.degree || '').toLowerCase().includes(deg);
 
       // Relevance Scoring for fuzzy search
       let searchScore = 0;
@@ -149,7 +251,7 @@
       }
 
       // If it passes dropdown filters
-      if (matchU && matchB && matchS && matchY && matchC && matchSub) {
+      if (matchU && matchB && matchS && matchY && matchC && matchSub && matchDeg) {
         return { ...p, searchScore }; // Attach calculated score for sorting
       }
       return null;
@@ -159,7 +261,13 @@
     renderActiveFilters();
     renderFilterCount();
     currentPage = 1;
-    renderResults();
+    
+    // Add a small artificial delay so the user explicitly sees the refresh taking place
+    showLoading(true);
+    setTimeout(() => {
+      renderResults();
+      showLoading(false);
+    }, 300);
     // Removed automatic scroll to top unprompted
     // window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -245,9 +353,9 @@
       </div>
       <div class="paper-card-footer">
         <span class="badge badge-purple">${escHtml(p.subject || '—')}</span>
-        <button class="view-btn" onclick="openPaperViewer('${p.id}','${escHtml(p.title || p.subject || 'Question Paper')}','${escHtml(p.fileUrl || '')}','${p.fileType || 'pdf'}')" aria-label="View ${escHtml(p.title || 'paper')}">
+        <a href="paper.html?id=${p.id}" class="btn btn-primary" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
           👁 View Paper
-        </button>
+        </a>
       </div>
     </article>`;
   }
@@ -301,15 +409,15 @@
         globalSearch.closest('.global-search-container')?.querySelector('.global-search-wrap')?.classList.remove('has-value');
       }
     } else {
-      const map = { university: filterUniversity, branch: filterBranch, semester: filterSemester, year: filterYear, code: filterCode, subject: filterSubject };
-      if (map[key]) { map[key].value = ''; if (key === 'university') loadBranches(); }
+      const map = { university: filterUniversity, branch: filterBranch, semester: filterSemester, year: filterYear, code: filterCode, subject: filterSubject, degree: filterDegree };
+      if (map[key]) { map[key].value = ''; if (key === 'university' || key === 'degree') reloadBranchesCascade(); }
     }
     applyFilters();
   };
 
   if (clearAllBtn) {
     clearAllBtn.addEventListener('click', () => {
-      [filterUniversity, filterBranch, filterSemester, filterYear, filterCode, filterSubject].forEach(el => { if (el) el.value = ''; });
+      [filterUniversity, filterBranch, filterSemester, filterYear, filterCode, filterSubject, filterDegree].forEach(el => { if (el) el.value = ''; });
       activeSearchQuery = '';
       if (globalSearch) {
         globalSearch.value = '';
@@ -464,9 +572,31 @@
     searchPapersBtn.addEventListener('click', triggerGlobalSearch);
   }
 
-  [filterUniversity, filterBranch, filterSemester, filterYear].forEach(el => {
+  // ─── Cascading Filter Events: Degree → University → Branch ───
+  async function reloadBranchesCascade() {
+    const uId = filterUniversity?.value || null;
+    const deg = filterDegree?.value || null;
+    // Reset branch selection when parent changes
+    if (filterBranch) filterBranch.value = '';
+    await loadBranches(uId, deg);
+  }
+
+  if (filterDegree) {
+    filterDegree.addEventListener('change', async () => {
+      await reloadBranchesCascade();
+      applyFilters();
+    });
+  }
+
+  if (filterUniversity) {
+    filterUniversity.addEventListener('change', async () => {
+      await reloadBranchesCascade();
+      applyFilters();
+    });
+  }
+
+  [filterBranch, filterSemester, filterYear].forEach(el => {
     if (el) el.addEventListener('change', () => {
-      if (el === filterUniversity) loadBranches(el.value || null);
       applyFilters();
     });
   });
@@ -504,6 +634,7 @@
   // ─── Init ───────────────────────────────
   async function init() {
     populateYears();
+    await loadDegrees();
     await loadUniversities();
     await loadBranches();
     await loadPapers();
