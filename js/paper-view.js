@@ -70,57 +70,80 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateMeta('property', 'og:description', descriptionText);
     updateMeta('property', 'og:url', window.location.href);
     
-    // Load PDF
-    const frame = document.getElementById('viewerFrame');
-    if (p.fileUrl) {
-      const isPdf = p.fileType === 'pdf' || (p.fileName && p.fileName.toLowerCase().endsWith('.pdf')) || p.fileUrl.includes('.pdf');
-      
-      const src = isPdf 
-        ? `https://docs.google.com/viewer?url=${encodeURIComponent(p.fileUrl)}&embedded=true`
-        : p.fileUrl;
+    // Setup Full Screen Viewer
+    const openBtn = document.getElementById('openViewerBtn');
+    if (p.fileUrl && openBtn) {
+      openBtn.addEventListener('click', () => {
+        const isPdf = p.fileType === 'pdf' || (p.fileName && p.fileName.toLowerCase().endsWith('.pdf')) || p.fileUrl.includes('.pdf');
         
-      // Show loading state initially
-      frame.style.opacity = '0';
-      frame.style.transition = 'opacity 0.4s ease';
-      
-      let loaded = false;
-      let retryCount = 0;
-      const MAX_RETRIES = 3;
-      let viewerRetryTimer = null;
-
-      function onFrameLoad() {
-        loaded = true;
-        clearTimeout(viewerRetryTimer);
-        frame.style.opacity = '1';
-        const loader = document.querySelector('.viewer-loader');
-        if (loader) loader.style.display = 'none';
-      }
-
-      function tryLoad() {
-        loaded = false;
-        frame.style.opacity = '0';
-        const loader = document.querySelector('.viewer-loader');
-        if (loader) loader.style.display = 'flex';
+        const src = isPdf 
+          ? `https://docs.google.com/viewer?url=${encodeURIComponent(p.fileUrl)}&embedded=true`
+          : p.fileUrl;
+          
+        const viewerModal = document.getElementById('viewerModal');
+        const frame = document.getElementById('viewerFrame');
+        const loader = viewerModal.querySelector('.viewer-loader');
         
-        // Use a unique fragment to force iframe reload without busting Google's server cache
-        frame.src = isPdf ? src + '&_t=' + Date.now() : src;
-        frame.onload = onFrameLoad;
+        if (viewerModal && frame) {
+          // Show loading state initially
+          frame.style.opacity = '0';
+          frame.style.transition = 'opacity 0.4s ease';
+          
+          let loaded = false;
+          let retryCount = 0;
+          const MAX_RETRIES = 3;
+          let viewerRetryTimer = null;
 
-        if (isPdf) {
-          // Auto-retry if not loaded after 5 seconds
-          viewerRetryTimer = setTimeout(() => {
-            if (!loaded && retryCount < MAX_RETRIES) {
-              retryCount++;
-              console.log(`PDF viewer: auto-retry ${retryCount}/${MAX_RETRIES}`);
-              tryLoad();
+          function onFrameLoad() {
+            loaded = true;
+            clearTimeout(viewerRetryTimer);
+            frame.style.opacity = '1';
+            if (loader) loader.style.display = 'none';
+          }
+
+          function tryLoad() {
+            loaded = false;
+            frame.style.opacity = '0';
+            if (loader) loader.style.display = 'flex';
+            
+            // Use a unique fragment to force iframe reload without busting Google's server cache
+            frame.src = isPdf ? src + '&_t=' + Date.now() : src;
+            frame.onload = onFrameLoad;
+
+            if (isPdf) {
+              // Auto-retry if not loaded after 5 seconds
+              viewerRetryTimer = setTimeout(() => {
+                if (!loaded && retryCount < MAX_RETRIES) {
+                  retryCount++;
+                  console.log(`PDF viewer: auto-retry ${retryCount}/${MAX_RETRIES}`);
+                  tryLoad();
+                }
+              }, 5000);
             }
-          }, 5000);
-        }
-      }
+          }
 
-      setTimeout(tryLoad, 50);
-    } else {
-      frame.parentElement.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-muted);">PDF file is missing for this paper.</div>';
+          setTimeout(tryLoad, 50);
+          
+          // Open Modal
+          viewerModal.classList.add('active');
+          document.body.style.overflow = 'hidden';
+          
+          // Close button logic
+          const closeBtn = document.getElementById('closeViewer');
+          if (closeBtn) {
+            closeBtn.onclick = () => {
+              clearTimeout(viewerRetryTimer);
+              viewerModal.classList.remove('active');
+              document.body.style.overflow = '';
+              setTimeout(() => { if (frame) frame.src = ''; }, 300);
+            };
+          }
+        }
+      });
+    } else if (openBtn) {
+      openBtn.disabled = true;
+      openBtn.textContent = 'PDF Not Available';
+      openBtn.style.opacity = '0.7';
     }
     
     // Swap screens

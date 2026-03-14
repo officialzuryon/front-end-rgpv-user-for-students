@@ -23,7 +23,8 @@ function generatePage(subject) {
   const pageUrl = `${DOMAIN}/papers/${slug}`;
   const primaryCode = codes[0];
   const allCodesDisplay = codes.filter((c, i, a) => a.indexOf(c) === i).slice(0, 4).join(', ');
-  const fullTitle = `RGPV ${title} Previous Year Papers | ${allCodesDisplay} | Free PDF View`;
+  const uni = subject.university || 'RGPV';
+  const fullTitle = `${uni} ${title} PYQ & Previous Year Papers | ${allCodesDisplay} | Free PDF View`;
 
   // Build codes array for JavaScript (for Firebase matching)
   const codesArrayStr = JSON.stringify(codes.map(c => c.toLowerCase().replace(/[\\s-]/g, '')));
@@ -166,7 +167,7 @@ function generatePage(subject) {
       <a href="../papers.html">Papers</a> <span aria-hidden="true">›</span>
       <span>${title}</span>
     </nav>
-    <h1>📄 RGPV ${title} Previous Year Papers</h1>
+    <h1>📄 ${uni} ${title} PYQ & Previous Year Papers</h1>
     <p>${description}</p>
   </div>
 </header>
@@ -233,11 +234,11 @@ function generatePage(subject) {
 
     <!-- SEO Content Block -->
     <section class="seo-content">
-      <h2>About RGPV ${title} (${allCodesDisplay}) Question Papers</h2>
-      <p>RGPV ${title} is a core subject offered in Semester ${semester} for ${branch} students at Rajiv Gandhi Proudyogiki Vishwavidyalaya (RGPV), Bhopal. This subject is identified by paper codes <strong>${allCodesDisplay}</strong> across different batches and branches.</p>
-      <p>Students searching for <strong>RGPV ${primaryCode} paper</strong>, <strong>RGPV ${title} question paper</strong>, or <strong>RGPV ${title} previous year paper</strong> will find all available papers on this page. We match papers by paper code (${allCodesDisplay}) as well as by subject name.</p>
-      <p>Practicing previous year question papers is the most effective strategy for RGPV exam preparation. Our collection of ${title} papers helps you understand the exam pattern, identify frequently asked topics, and improve your time management skills.</p>
-      <p>All papers on RGPV Papers (rgpvpyq.co.in) are <strong>completely free to view</strong> — no downloads, no sign-ups. Just open and start studying. We update our library regularly with the latest exam papers.</p>
+      <h2>About ${uni} ${title} PYQ (${allCodesDisplay}) Question Papers</h2>
+      <p>${uni} ${title} is a core subject offered in Semester ${semester} for ${branch} students. This subject is identified by paper codes <strong>${allCodesDisplay}</strong> across different batches and branches.</p>
+      <p>Students searching for <strong>${uni} ${primaryCode} PYQ</strong>, <strong>${uni} ${title} question paper</strong>, <strong>${uni} ${title} previous year paper</strong>, or <strong>${uni} ${title} pyq</strong> will find all available papers on this page. We match papers by paper code (${allCodesDisplay}) as well as by subject name.</p>
+      <p>Practicing PYQ (previous year question papers) is the most effective strategy for ${uni} exam preparation. Our collection of ${title} PYQ papers helps you understand the exam pattern, identify frequently asked topics, and improve your time management skills.</p>
+      <p>All ${uni} PYQ papers on RGPV Papers (rgpvpyq.co.in) are <strong>completely free to view</strong> — no downloads, no sign-ups. Just open and start studying. We update our library regularly with the latest exam papers.</p>
     </section>
 
   </div>

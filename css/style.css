@@ -334,6 +334,23 @@ input, select, textarea { font-family: inherit; outline: none; }
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
+/* Mobile: make viewer cover max screen */
+@media (max-width: 768px) {
+  .modal-overlay { padding: 0; }
+  .modal-box {
+    max-width: 100%; max-height: 100vh; height: 100vh;
+    border-radius: 0;
+  }
+  .modal-header {
+    padding: 10px 14px;
+  }
+  .modal-title { font-size: 0.85rem; }
+  .modal-body iframe {
+    min-height: calc(100vh - 50px);
+    border-radius: 0;
+  }
+  .no-download-notice { display: none; }
+}
 .no-download-notice {
   position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
   background: rgba(13,13,43,0.8); color: #fff;
@@ -488,5 +505,4 @@ textarea.form-control { resize: vertical; min-height: 130px; }
 @media (max-width: 480px) {
   .hero h1 { font-size: 2rem; }
   .hero-cta { flex-direction: column; }
-  .modal-box { border-radius: var(--radius-lg); }
 }

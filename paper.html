@@ -77,18 +77,22 @@
 </header>
 
 <!-- Main -->
-<main class="section-padding">
-  <div class="container">
-
-    <!-- Search Panel -->
-    <div class="search-panel" role="search" aria-label="Paper search filters">
-      <div class="search-panel-header">
-        <div class="search-panel-title">
-          <span class="icon">🔍</span>
-          Filter Papers
-          <span class="filter-count" id="filterCount" style="display:none">0</span>
-        </div>
-<main class="main-content" style="background-color: var(--bg-body); min-height: 100vh;">
+<main class="main-content" style="background-color: var(--bg-body); min-height: 100vh; padding: 2rem 0;">
+<style>
+  @media (max-width: 768px) {
+    .page-header { padding: calc(var(--nav-height) + 16px) 0 20px !important; }
+    .page-header h1 { font-size: 1.3rem !important; }
+    .page-header p { display: none; }
+    .main-content { padding: 1rem 0 !important; }
+    .back-nav { margin-bottom: 10px !important; }
+    .paper-header { padding: 16px !important; margin-bottom: 12px !important; }
+    .paper-title { font-size: 1.1rem !important; margin-bottom: 8px !important; }
+    .paper-details-grid { gap: 8px !important; padding-top: 10px !important; }
+    .detail-label { font-size: 0.62rem !important; }
+    .detail-value { font-size: 0.82rem !important; }
+    #openViewerBtn { width: 100%; justify-content: center; }
+  }
+</style>
   <div class="container paper-view-container">
     
     <a href="papers.html" class="back-nav">← Back to Search</a>
@@ -98,7 +102,7 @@
         <p style="margin-top:20px; color: var(--text-muted); font-weight: 500;">Loading paper details...</p>
     </div>
 
-    <div id="errorState">
+    <div id="errorState" style="display:none;">
         <h2>Paper Not Found</h2>
         <p style="color:var(--text-muted);">The question paper you are looking for does not exist or has been removed.</p>
         <a href="papers.html" class="btn btn-primary" style="margin-top: 20px;">Browse All Papers</a>
@@ -133,21 +137,40 @@
             </div>
         </div>
         
-        <div class="viewer-section">
-          <div class="viewer-loader">
-            <div class="spinner"></div>
-            <span style="margin-top: 14px; font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">Loading secure PDF viewer...</span>
-          </div>
-          <div class="popout-blocker">
-            <div class="logo-icon" style="width: 34px; height: 34px; border-radius: 8px; background: linear-gradient(135deg, #6C3AE0 0%, #4A00E0 40%, #00B4D8 100%); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; box-shadow: 0 4px 10px rgba(108,58,224,0.3);">📄</div>
-          </div>
-          <iframe id="viewerFrame" style="width: 100%; height: 100%; border: none; position: relative; z-index: 10;" title="Question Paper Viewer" allow="fullscreen" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox"></iframe>
-          <div class="no-download-notice">🔒 View Only — Sharing papers is subject to copyright</div>
+        <div style="margin-bottom: 24px; display: flex; justify-content: center;">
+            <button id="openViewerBtn" class="btn btn-primary btn-lg" style="padding: 18px 40px; font-size: 1.1rem; box-shadow: var(--shadow-md);">
+                <span style="font-size: 1.3rem; margin-right: 8px;">👁️</span> View Question Paper Full Screen
+            </button>
         </div>
     </div>
     
   </div>
 </main>
+
+<!-- Paper Viewer Modal (no download) -->
+<div class="modal-overlay" id="viewerModal" role="dialog" aria-modal="true" aria-labelledby="viewerTitle">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 class="modal-title" id="viewerTitle">Question Paper</h2>
+      <div class="modal-actions">
+        <button class="modal-close" id="closeViewer" aria-label="Close viewer">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" style="position: relative;">
+      <!-- Loading state behind iframe -->
+      <div class="viewer-loader" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1;">
+        <div class="spinner"></div>
+        <span style="margin-top: 14px; font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">Loading PDF viewer...</span>
+      </div>
+      
+      <div class="popout-blocker" style="position: absolute; top: 0; right: 0; width: 56px; height: 56px; background: #fff; z-index: 100; border-bottom-left-radius: 14px; pointer-events: auto; display: flex; align-items: center; justify-content: center; box-shadow: -2px 2px 6px rgba(0,0,0,0.05);">
+        <div class="logo-icon" aria-hidden="true" style="width: 34px; height: 34px; border-radius: 8px; background: linear-gradient(135deg, #6C3AE0 0%, #4A00E0 40%, #00B4D8 100%); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; box-shadow: 0 4px 10px rgba(108,58,224,0.3);">📄</div>
+      </div>
+      <iframe id="viewerFrame" style="position: relative; z-index: 10;" title="Question Paper Viewer" allow="fullscreen" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox"></iframe>
+      <div class="no-download-notice" aria-hidden="true" style="z-index: 101;">🔒 View Only — Sharing papers is subject to copyright</div>
+    </div>
+  </div>
+</div>
 
 <!-- Footer -->
 <footer class="footer" role="contentinfo">
