@@ -73,14 +73,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load PDF
     const frame = document.getElementById('viewerFrame');
     if (p.fileUrl) {
-      // Adding #toolbar=0 prevents easy downloading in most embedded PDF viewers
-      frame.src = p.fileUrl + '#toolbar=0&navpanes=0';
+      const isPdf = p.fileType === 'pdf' || (p.fileName && p.fileName.toLowerCase().endsWith('.pdf')) || p.fileUrl.includes('.pdf');
       
-      // Hide loader once iframe loads
-      frame.onload = () => {
+      const src = isPdf 
+        ? `https://docs.google.com/viewer?url=${encodeURIComponent(p.fileUrl)}&embedded=true`
+        : p.fileUrl;
+        
+      // Show loading state initially
+      frame.style.opacity = '0';
+      frame.style.transition = 'opacity 0.4s ease';
+      
+      let loaded = false;
+      let retryCount = 0;
+      const MAX_RETRIES = 3;
+      let viewerRetryTimer = null;
+
+      function onFrameLoad() {
+        loaded = true;
+        clearTimeout(viewerRetryTimer);
+        frame.style.opacity = '1';
         const loader = document.querySelector('.viewer-loader');
         if (loader) loader.style.display = 'none';
-      };
+      }
+
+      function tryLoad() {
+        loaded = false;
+        frame.style.opacity = '0';
+        const loader = document.querySelector('.viewer-loader');
+        if (loader) loader.style.display = 'flex';
+        
+        // Use a unique fragment to force iframe reload without busting Google's server cache
+        frame.src = isPdf ? src + '&_t=' + Date.now() : src;
+        frame.onload = onFrameLoad;
+
+        if (isPdf) {
+          // Auto-retry if not loaded after 5 seconds
+          viewerRetryTimer = setTimeout(() => {
+            if (!loaded && retryCount < MAX_RETRIES) {
+              retryCount++;
+              console.log(`PDF viewer: auto-retry ${retryCount}/${MAX_RETRIES}`);
+              tryLoad();
+            }
+          }, 5000);
+        }
+      }
+
+      setTimeout(tryLoad, 50);
     } else {
       frame.parentElement.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-muted);">PDF file is missing for this paper.</div>';
     }
