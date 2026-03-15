@@ -172,7 +172,50 @@
     try {
       const snap = await db.collection('papers').orderBy('createdAt', 'desc').get();
       allPapers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      
+      // ─── Read Filters from URL ────────────────
+      const urlParams = new URLSearchParams(window.location.search);
+      let hasUrlFilters = false;
+      
+      if (urlParams.has('university') && filterUniversity) {
+          filterUniversity.value = urlParams.get('university');
+          hasUrlFilters = true;
+      }
+      if (urlParams.has('degree') && filterDegree) {
+          filterDegree.value = urlParams.get('degree');
+          await loadBranches(filterUniversity?.value, filterDegree.value);
+          hasUrlFilters = true;
+      }
+      if (urlParams.has('branch') && filterBranch) {
+          filterBranch.value = urlParams.get('branch');
+          hasUrlFilters = true;
+      }
+      if (urlParams.has('semester') && filterSemester) {
+          filterSemester.value = urlParams.get('semester');
+          hasUrlFilters = true;
+      }
+      if (urlParams.has('year') && filterYear) {
+          filterYear.value = urlParams.get('year');
+          hasUrlFilters = true;
+      }
+      if (urlParams.has('code') && filterCode) {
+          filterCode.value = urlParams.get('code');
+          hasUrlFilters = true;
+      }
+      if (urlParams.has('subject') && filterSubject) {
+          filterSubject.value = urlParams.get('subject');
+          hasUrlFilters = true;
+      }
+      if (urlParams.has('q') && globalSearch) {
+          globalSearch.value = urlParams.get('q');
+          activeSearchQuery = urlParams.get('q');
+          const wrap = globalSearch.closest('.global-search-container')?.querySelector('.global-search-wrap');
+          if (wrap) wrap.classList.add('has-value');
+          hasUrlFilters = true;
+      }
+
       applyFilters();
+
     } catch (e) {
       console.error('loadPapers:', e);
       showEmpty('Failed to load papers. Please refresh.');
@@ -256,6 +299,26 @@
       }
       return null;
     }).filter(Boolean); // Drop nulls
+    
+    // ─── Update URL to allow sharing filters ───────────────
+    const urlParams = new URLSearchParams();
+    if (uId) urlParams.set('university', uId);
+    if (bId) urlParams.set('branch', bId);
+    if (filterDegree?.value) urlParams.set('degree', filterDegree.value);
+    if (sem) urlParams.set('semester', sem);
+    if (yr) urlParams.set('year', yr);
+    if (filterCode?.value) urlParams.set('code', filterCode.value);
+    if (filterSubject?.value) urlParams.set('subject', filterSubject.value);
+    if (activeSearchQuery) urlParams.set('q', activeSearchQuery);
+    
+    // Build new URL only if we actually have filters, otherwise revert to base path
+    const paramString = urlParams.toString();
+    const newUrl = window.location.pathname + (paramString ? '?' + paramString : '');
+    
+    // Only update if we aren't currently viewing a PDF so we don't clobber the #viewer state
+    if (window.location.hash !== '#viewer') {
+       window.history.replaceState({}, '', newUrl);
+    }
 
     sortPapers();
     renderActiveFilters();
