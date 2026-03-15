@@ -5,6 +5,9 @@
 (async function () {
   const db = window.RGPV.db;
 
+  // ─── Share SVG icon (forward-arrow style) ───
+  const SHARE_ICON = `<svg class="share-icon-svg" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>`;
+
   // ─── State ─────────────────────────────
   let allPapers = [];
   let filteredPapers = [];
@@ -108,7 +111,7 @@
         branchList = branchList.filter(b => {
           // If the branch explicitly has this degree assigned in the DB, it belongs here 100%
           if (b.degree && b.degree === degreeValue) return true;
-          
+
           // If it doesn't have an explicit degree, fallback to guessing via text mapping
           if (allowedCourses.length > 0) {
             const bName = (b.name || '').toLowerCase();
@@ -135,7 +138,7 @@
         }
       });
       branches = branchList; // keep all branches for lookups!
-      
+
       if (filterBranch) {
         filterBranch.innerHTML = '<option value="">All Branches / Courses</option>';
         uniqueBranches.forEach(b => {
@@ -154,16 +157,16 @@
       // Fetch without orderBy to prevent Missing Index crash
       const snap = await db.collection('degrees').get();
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      
+
       // Sort locally
       docs.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-      
+
       docs.forEach(d => {
         const opt = document.createElement('option');
         opt.value = d.name; opt.textContent = d.name;
         filterDegree.appendChild(opt);
       });
-    } catch(e) { console.error('loadDegrees:', e); }
+    } catch (e) { console.error('loadDegrees:', e); }
   }
 
   // ─── Load Papers ────────────────────────
@@ -172,7 +175,7 @@
     try {
       const snap = await db.collection('papers').orderBy('createdAt', 'desc').get();
       allPapers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      
+
       // ─── Read Filters from URL ────────────────
       const urlParams = new URLSearchParams(window.location.search);
       let hasUrlFilters = false;
@@ -195,40 +198,40 @@
         }
         return el.value === val;
       };
-      
+
       if (urlParams.has('university')) {
-          if (syncDropdown(filterUniversity, urlParams.get('university'))) hasUrlFilters = true;
+        if (syncDropdown(filterUniversity, urlParams.get('university'))) hasUrlFilters = true;
       }
       if (urlParams.has('degree')) {
-          if (syncDropdown(filterDegree, urlParams.get('degree'))) {
-            // Reload branches for this degree before trying to sync branch
-            await loadBranches(filterUniversity?.value, filterDegree.value);
-            hasUrlFilters = true;
-          }
+        if (syncDropdown(filterDegree, urlParams.get('degree'))) {
+          // Reload branches for this degree before trying to sync branch
+          await loadBranches(filterUniversity?.value, filterDegree.value);
+          hasUrlFilters = true;
+        }
       }
       if (urlParams.has('branch')) {
-          if (syncDropdown(filterBranch, urlParams.get('branch'))) hasUrlFilters = true;
+        if (syncDropdown(filterBranch, urlParams.get('branch'))) hasUrlFilters = true;
       }
       if (urlParams.has('semester')) {
-          if (syncDropdown(filterSemester, urlParams.get('semester'))) hasUrlFilters = true;
+        if (syncDropdown(filterSemester, urlParams.get('semester'))) hasUrlFilters = true;
       }
       if (urlParams.has('year')) {
-          if (syncDropdown(filterYear, urlParams.get('year'))) hasUrlFilters = true;
+        if (syncDropdown(filterYear, urlParams.get('year'))) hasUrlFilters = true;
       }
       if (urlParams.has('code') && filterCode) {
-          filterCode.value = urlParams.get('code');
-          hasUrlFilters = true;
+        filterCode.value = urlParams.get('code');
+        hasUrlFilters = true;
       }
       if (urlParams.has('subject') && filterSubject) {
-          filterSubject.value = urlParams.get('subject');
-          hasUrlFilters = true;
+        filterSubject.value = urlParams.get('subject');
+        hasUrlFilters = true;
       }
       if (urlParams.has('q') && globalSearch) {
-          globalSearch.value = urlParams.get('q');
-          activeSearchQuery = urlParams.get('q');
-          const wrap = globalSearch.closest('.global-search-container')?.querySelector('.global-search-wrap');
-          if (wrap) wrap.classList.add('has-value');
-          hasUrlFilters = true;
+        globalSearch.value = urlParams.get('q');
+        activeSearchQuery = urlParams.get('q');
+        const wrap = globalSearch.closest('.global-search-container')?.querySelector('.global-search-wrap');
+        if (wrap) wrap.classList.add('has-value');
+        hasUrlFilters = true;
       }
 
       applyFilters();
@@ -275,7 +278,7 @@
       const pYear = String(p.year || '');
 
       const matchU = !uId || pUniv === uId;
-      
+
       // Match by branch Name instead of ID, since branches are global per degree
       let paperBranchName = (branches.find(b => b.id === pBranch)?.name || p.branch || '').toLowerCase().trim();
       let selectedBranchName = (branches.find(b => b.id === bId)?.name || '').toLowerCase().trim();
@@ -295,19 +298,19 @@
           // Exact matches are worth the most
           if (pCode === token) { searchScore += 10; matched = true; }
           else if (pCode.includes(token)) { searchScore += 5; matched = true; }
-          
+
           if (pSubject === token) { searchScore += 8; matched = true; }
           else if (pSubject.includes(token)) { searchScore += 4; matched = true; }
-          
+
           if (title === token) { searchScore += 6; matched = true; }
           else if (title.includes(token)) { searchScore += 3; matched = true; }
-          
+
           if (matched) tokenMatches++;
         });
-        
+
         // If a query exists, it MUST match at least partially (score > 0)
         // You can make this stricter by requiring (tokenMatches === queryTokens.length)
-        if (searchScore === 0) return null; 
+        if (searchScore === 0) return null;
       }
 
       // If it passes dropdown filters
@@ -316,7 +319,7 @@
       }
       return null;
     }).filter(Boolean); // Drop nulls
-    
+
     // ─── Update URL to allow sharing filters ───────────────
     const urlParams = new URLSearchParams();
     if (uId) urlParams.set('university', uId);
@@ -327,21 +330,21 @@
     if (filterCode?.value) urlParams.set('code', filterCode.value);
     if (filterSubject?.value) urlParams.set('subject', filterSubject.value);
     if (activeSearchQuery) urlParams.set('q', activeSearchQuery);
-    
+
     // Build new URL only if we actually have filters, otherwise revert to base path
     const paramString = urlParams.toString();
     const newUrl = window.location.pathname + (paramString ? '?' + paramString : '');
-    
+
     // Only update if we aren't currently viewing a PDF so we don't clobber the #viewer state
     if (window.location.hash !== '#viewer') {
-       window.history.replaceState({}, '', newUrl);
+      window.history.replaceState({}, '', newUrl);
     }
 
     sortPapers();
     renderActiveFilters();
     renderFilterCount();
     currentPage = 1;
-    
+
     // Add a small artificial delay so the user explicitly sees the refresh taking place
     showLoading(true);
     setTimeout(() => {
@@ -360,13 +363,13 @@
       year: p => parseInt(p.year) || 0,
     };
     const getter = fieldMap[sortField] || fieldMap.title;
-    
+
     filteredPapers.sort((a, b) => {
       // Primary Sort: If a global search query is active, always rank by score first
       if (activeSearchQuery && a.searchScore !== b.searchScore) {
         return b.searchScore - a.searchScore; // Highest score first
       }
-      
+
       // Secondary Sort (or Primary if no search): User selected dropdown
       const va = getter(a), vb = getter(b);
       if (va < vb) return sortDir === 'asc' ? -1 : 1;
@@ -433,9 +436,14 @@
       </div>
       <div class="paper-card-footer">
         <span class="badge badge-purple">${escHtml(p.subject || '—')}</span>
-        <a href="paper.html?id=${p.id}" class="btn btn-primary" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
-          👁 View Paper
-        </a>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button onclick="sharePaper('${escHtml(p.title || p.subject || 'Paper')}', 'paper.html?id=${p.id}')" class="btn-share" aria-label="Share paper">
+            ${SHARE_ICON}<span class="share-label">Share</span>
+          </button>
+          <a href="paper.html?id=${p.id}" class="btn btn-primary" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
+            👁 View
+          </a>
+        </div>
       </div>
     </article>`;
   }
@@ -479,6 +487,12 @@
     const count = Object.keys(activeFilters).length;
     if (filterCountEl) { filterCountEl.textContent = count; filterCountEl.style.display = count ? '' : 'none'; }
     if (clearAllBtn) clearAllBtn.classList.toggle('visible', count > 0);
+
+    // Show/hide Share Filters row
+    const shareFiltersRow = document.getElementById('shareFiltersRow');
+    if (shareFiltersRow) {
+      shareFiltersRow.style.display = count > 0 ? 'flex' : 'none';
+    }
   }
 
   window.clearFilter = (key) => {
@@ -527,7 +541,7 @@
     if (viewerFrame) {
       const pdfContainer = document.getElementById('pdfContainer');
       const canvas = document.getElementById('pdfCanvas');
-      
+
       // Viewer UI Controls
       const pagination = viewerModal.querySelector('.viewer-pagination');
       const pageNumSpan = document.getElementById('pageNum');
@@ -541,127 +555,127 @@
         // Open Modal & Reset UI State
         viewerModal.classList.add('active');
         document.body.style.overflow = 'hidden';
-        
+
         const loader = getViewerLoader();
         if (loader) loader.style.display = 'flex';
         pdfContainer.style.display = 'none';
         [pagination, prevPageBtn, nextPageBtn, zoomInBtn, zoomOutBtn].forEach(el => el && (el.style.display = 'none'));
-        
+
         // Use standard window scope variables for viewer state
         window._pdfDoc = null;
         window._pdfPageNum = 1;
         window._pdfScale = 1.2; // Default render scale
         let isRendering = false;
         let pageNumPending = null;
-        
+
         // Zoom state
         let touchScale = 1;
         let initialPinchDistance = 0;
         let lastPinchTime = 0; // Prevent tap registering right after pinch
-        
+
         const updateTransform = () => {
-           // Ensure we don't zoom out past original size too much
-           touchScale = Math.max(1, Math.min(touchScale, 5));
-           canvas.style.width = (100 * touchScale) + '%';
-           canvas.style.transform = `scale(${touchScale})`;
+          // Ensure we don't zoom out past original size too much
+          touchScale = Math.max(1, Math.min(touchScale, 5));
+          canvas.style.width = (100 * touchScale) + '%';
+          canvas.style.transform = `scale(${touchScale})`;
         };
 
         const updateSize = () => {
-           touchScale = Math.max(1, Math.min(touchScale, 5));
-           canvas.style.width = (100 * touchScale) + '%';
+          touchScale = Math.max(1, Math.min(touchScale, 5));
+          canvas.style.width = (100 * touchScale) + '%';
         };
 
         const resetTransform = () => {
-           touchScale = 1;
-           updateSize();
+          touchScale = 1;
+          updateSize();
         };
-        
+
         // Touch Event Listeners for pinch-to-zoom
         pdfContainer.addEventListener('touchstart', (e) => {
-           if (e.touches.length >= 2) {
-              initialPinchDistance = Math.hypot(
-                 e.touches[0].clientX - e.touches[1].clientX,
-                 e.touches[0].clientY - e.touches[1].clientY
-              );
-           }
-        }, {passive: false});
+          if (e.touches.length >= 2) {
+            initialPinchDistance = Math.hypot(
+              e.touches[0].clientX - e.touches[1].clientX,
+              e.touches[0].clientY - e.touches[1].clientY
+            );
+          }
+        }, { passive: false });
 
         pdfContainer.addEventListener('touchmove', (e) => {
-           if (e.touches.length >= 2) {
-              e.preventDefault(); // Prevent default scroll when pinching
-              const currentDistance = Math.hypot(
-                 e.touches[0].clientX - e.touches[1].clientX,
-                 e.touches[0].clientY - e.touches[1].clientY
-              );
-              
-              if (initialPinchDistance > 0) {
-                 const delta = currentDistance / initialPinchDistance;
-                 touchScale *= delta;
-                 initialPinchDistance = currentDistance;
-                 lastPinchTime = new Date().getTime(); // Mark that we just pinched
-                 updateSize();
-              }
-           }
-        }, {passive: false});
-        
+          if (e.touches.length >= 2) {
+            e.preventDefault(); // Prevent default scroll when pinching
+            const currentDistance = Math.hypot(
+              e.touches[0].clientX - e.touches[1].clientX,
+              e.touches[0].clientY - e.touches[1].clientY
+            );
+
+            if (initialPinchDistance > 0) {
+              const delta = currentDistance / initialPinchDistance;
+              touchScale *= delta;
+              initialPinchDistance = currentDistance;
+              lastPinchTime = new Date().getTime(); // Mark that we just pinched
+              updateSize();
+            }
+          }
+        }, { passive: false });
+
         pdfContainer.addEventListener('touchend', (e) => {
-           if (e.touches.length < 2) {
-              initialPinchDistance = 0;
-           }
+          if (e.touches.length < 2) {
+            initialPinchDistance = 0;
+          }
         });
-        
+
         // Double tap to reset zoom
         let lastTap = 0;
         pdfContainer.addEventListener('touchend', (e) => {
-           const currentTime = new Date().getTime();
-           
-           // If we just finished a pinch zoom, ignore this as a tap to prevent accidental resets
-           if (currentTime - lastPinchTime < 300) {
-              return; 
-           }
-           
-           if (e.changedTouches.length === 1) {
-              const tapLength = currentTime - lastTap;
-              if (tapLength < 500 && tapLength > 0) {
-                 resetTransform();
-                 e.preventDefault();
-              }
-              lastTap = currentTime;
-           }
+          const currentTime = new Date().getTime();
+
+          // If we just finished a pinch zoom, ignore this as a tap to prevent accidental resets
+          if (currentTime - lastPinchTime < 300) {
+            return;
+          }
+
+          if (e.changedTouches.length === 1) {
+            const tapLength = currentTime - lastTap;
+            if (tapLength < 500 && tapLength > 0) {
+              resetTransform();
+              e.preventDefault();
+            }
+            lastTap = currentTime;
+          }
         });
-        
+
         const ctx = canvas.getContext('2d');
-        
+
         // Render the page
         const renderPage = (num) => {
           isRendering = true;
-          
+
           // Fetch page
           window._pdfDoc.getPage(num).then((page) => {
             const viewport = page.getViewport({ scale: window._pdfScale });
             canvas.height = viewport.height;
             canvas.width = viewport.width;
-            
+
             const renderContext = {
               canvasContext: ctx,
               viewport: viewport
             };
-            
+
             const renderTask = page.render(renderContext);
-            
+
             renderTask.promise.then(() => {
               isRendering = false;
               if (loader) loader.style.display = 'none';
               pdfContainer.style.display = 'block';
-              
+
               // Show/Hide controls
               [pagination, prevPageBtn, nextPageBtn, zoomInBtn, zoomOutBtn].forEach(el => el && (el.style.display = 'flex'));
               if (pageNumSpan) pageNumSpan.textContent = num;
-              
+
               // Next/Prev buttons state
               if (prevPageBtn) prevPageBtn.disabled = num <= 1;
               if (nextPageBtn) nextPageBtn.disabled = num >= window._pdfDoc.numPages;
-              
+
               if (pageNumPending !== null) {
                 renderPage(pageNumPending);
                 pageNumPending = null;
@@ -695,15 +709,15 @@
           resetTransform();
           queueRenderPage(window._pdfPageNum);
         };
-        
+
         const onZoomIn = () => {
-           touchScale += 0.5;
-           updateSize();
+          touchScale += 0.5;
+          updateSize();
         };
-        
+
         const onZoomOut = () => {
-           touchScale -= 0.5;
-           updateSize();
+          touchScale -= 0.5;
+          updateSize();
         };
 
         // Attach event listeners natively to buttons
@@ -714,48 +728,48 @@
 
         // Fetch the PDF using pdf.js
         const fetchAndRenderPDF = async () => {
-           try {
-              // Ensure pdf.js is loaded
-              if (!window.pdfjsLib) {
-                 throw new Error("PDF.js library failed to load");
-              }
-              
-              const loadingTask = window.pdfjsLib.getDocument(url);
-              window._pdfDoc = await loadingTask.promise;
-              
-              if (pageCountSpan) pageCountSpan.textContent = window._pdfDoc.numPages;
-              
-              // Render first page
-              renderPage(window._pdfPageNum);
-              
-           } catch (error) {
-              console.error("Error loading PDF:", error);
-              if (loader) {
-                 loader.innerHTML = `
+          try {
+            // Ensure pdf.js is loaded
+            if (!window.pdfjsLib) {
+              throw new Error("PDF.js library failed to load");
+            }
+
+            const loadingTask = window.pdfjsLib.getDocument(url);
+            window._pdfDoc = await loadingTask.promise;
+
+            if (pageCountSpan) pageCountSpan.textContent = window._pdfDoc.numPages;
+
+            // Render first page
+            renderPage(window._pdfPageNum);
+
+          } catch (error) {
+            console.error("Error loading PDF:", error);
+            if (loader) {
+              loader.innerHTML = `
                    <span style="color:var(--danger); text-align:center;">
                      Error loading document.<br>
                      <small style="color:var(--text-muted);">${error.message}</small>
                    </span>`;
-              }
-           }
+            }
+          }
         };
-        
+
         // Start the flow
         fetchAndRenderPDF();
 
       }
     }
-    
+
     // Add history state so native mobile back button closes modal
     window.history.pushState({ modal: 'viewer' }, '', '#viewer');
     openModal('viewerModal');
   };
-  
+
   // Listen for native back button to close modal
   window.addEventListener('popstate', (e) => {
     const viewerModal = document.getElementById('viewerModal');
     if (viewerModal && viewerModal.classList.contains('active') && window.location.hash !== '#viewer') {
-       document.getElementById('closeViewer').click();
+      document.getElementById('closeViewer').click();
     }
   });
 
@@ -764,28 +778,28 @@
       clearTimeout(viewerRetryTimer);
       clearTimeout(viewerLoadTimer);
       closeModal('viewerModal');
-      
+
       const canvas = document.getElementById('pdfCanvas');
       const pdfContainer = document.getElementById('pdfContainer');
       const loader = getViewerLoader();
-      
+
       if (canvas && pdfContainer) {
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         pdfContainer.style.display = 'none';
       }
       if (loader) {
-         loader.style.display = 'flex';
-         loader.innerHTML = `<div class="spinner"></div><span style="margin-top: 14px; font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">Loading secure viewer...</span>`;
+        loader.style.display = 'flex';
+        loader.innerHTML = `<div class="spinner"></div><span style="margin-top: 14px; font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">Loading secure viewer...</span>`;
       }
       if (window._pdfDoc) {
         window._pdfDoc.destroy();
         window._pdfDoc = null;
       }
-      
+
       // Clean up URL if we closed via the button instead of native back
       if (window.location.hash === '#viewer') {
-         window.history.replaceState('', document.title, window.location.pathname + window.location.search);
+        window.history.replaceState('', document.title, window.location.pathname + window.location.search);
       }
     });
   }
@@ -825,7 +839,7 @@
 
   // ─── Search/Filter Events ───────────────
   const searchPapersBtn = document.getElementById('searchPapersBtn');
-  
+
   function triggerGlobalSearch() {
     if (!globalSearch) return;
     const val = globalSearch.value.trim().toLowerCase();
@@ -839,7 +853,7 @@
       const wrap = globalSearch.closest('.global-search-container')?.querySelector('.global-search-wrap');
       if (wrap) wrap.classList.toggle('has-value', !!globalSearch.value);
     });
-    
+
     // Trigger on Enter key
     globalSearch.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
@@ -961,7 +975,14 @@
             </div>
             <div class="paper-card-footer">
               <span class="badge badge-purple">${escHtml(p.subject || '—')}</span>
-              <a href="papers.html?code=${encodeURIComponent(p.code || '')}" class="view-btn">👁 View</a>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button onclick="sharePaper('${escHtml(p.title || p.subject || 'Paper')}', 'paper.html?id=${p.id}')" class="btn-share" aria-label="Share paper">
+                  ${SHARE_ICON}<span class="share-label">Share</span>
+                </button>
+                <a href="paper.html?id=${p.id}" class="btn btn-primary" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
+                  👁 View
+                </a>
+              </div>
             </div>
           </article>`;
         }).join('');

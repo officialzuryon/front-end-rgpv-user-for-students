@@ -146,4 +146,35 @@ document.addEventListener('DOMContentLoaded', () => {
   const yearEl = document.getElementById('currentYear');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
+  /* ─── Global Share Utility ───────────── */
+  window.sharePaper = async (title, relativeUrl) => {
+    // Construct full URL (handles both relative and full paths)
+    const url = relativeUrl.startsWith('http') 
+      ? relativeUrl 
+      : `${window.location.origin}/${relativeUrl.replace(/^\//, '')}`;
+    
+    const shareData = {
+      title: title || 'RGPV Question Paper',
+      text: `Check out this ${title || 'question paper'} on RGPV Papers!`,
+      url: url
+    };
+
+    try {
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        throw new Error('Web Share not supported');
+      }
+    } catch (err) {
+      // Fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(url);
+        if (window.showToast) window.showToast('Link copied to clipboard!', 'success');
+      } catch (clipErr) {
+        console.error('Clipboard error:', clipErr);
+        if (window.showToast) window.showToast('Failed to copy link.', 'error');
+      }
+    }
+  };
+
 });

@@ -122,7 +122,6 @@
   align-items: start;
 }
 .papers-sidebar { position: sticky; top: calc(var(--nav-height) + 16px); }
-.papers-main {}
 
 .results-meta {
   display: flex; align-items: center; justify-content: space-between;
@@ -187,9 +186,7 @@
   .papers-layout { grid-template-columns: 1fr; }
   .papers-sidebar { position: static; }
   .search-panel {
-    /* position: relative so it stays in content flow */
     position: relative;
-    /* Collapse to a smaller size on mid screens */
     padding: 18px;
     margin-bottom: 20px;
   }
@@ -296,4 +293,66 @@
   align-items: center;
   justify-content: center;
   box-shadow: -2px 2px 6px rgba(0,0,0,0.05);
+}
+
+/* ─── Share Button ──────────────────────────── */
+.share-icon-svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+.btn-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border);
+  background: #fff;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.btn-share:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(108,58,224,0.2);
+}
+.btn-share:hover .share-icon-svg {
+  stroke: #fff;
+}
+.btn-share:active {
+  transform: scale(0.96);
+}
+
+/* Share Filters row */
+.share-filters-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+}
+.share-filters-row .btn-share {
+  padding: 8px 18px;
+  font-size: 0.84rem;
+}
+
+@media (max-width: 480px) {
+  .paper-card-footer {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+  }
+  .btn-share span.share-label { display: none; }
+  .btn-share { padding: 7px 10px; }
 }

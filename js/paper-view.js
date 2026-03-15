@@ -318,6 +318,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       openBtn.style.opacity = '0.7';
     }
     
+    // Wire up Share Button
+    const shareBtn = document.getElementById('sharePaperBtn');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', () => {
+        if (window.sharePaper) {
+          window.sharePaper(titleText, window.location.href);
+        }
+      });
+    }
+
     // Swap screens
     loadingState.style.display = 'none';
     paperContent.style.display = 'block';
