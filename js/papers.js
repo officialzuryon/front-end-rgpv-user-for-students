@@ -488,11 +488,6 @@
     if (filterCountEl) { filterCountEl.textContent = count; filterCountEl.style.display = count ? '' : 'none'; }
     if (clearAllBtn) clearAllBtn.classList.toggle('visible', count > 0);
 
-    // Show/hide Share Filters row
-    const shareFiltersRow = document.getElementById('shareFiltersRow');
-    if (shareFiltersRow) {
-      shareFiltersRow.style.display = count > 0 ? 'flex' : 'none';
-    }
   }
 
   window.clearFilter = (key) => {

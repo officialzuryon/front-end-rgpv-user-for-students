@@ -166,13 +166,15 @@
         </button>
       </div>
 
-      <!-- Share Filters Row (visible only when filters are active) -->
-      <div class="share-filters-row" id="shareFiltersRow" style="display: none;">
+      <!-- Share Filters Row -->
+      <div class="share-filters-row" id="shareFiltersRow">
         <button class="btn-share" id="shareFiltersBtn" onclick="sharePaper('RGPV Papers — Filtered View', window.location.href)" aria-label="Share current filters">
           <svg class="share-icon-svg" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
           <span class="share-label">Share Filters</span>
         </button>
-        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">Share these filters with your friends so they can easily find the same papers!</span>
+        <span style="font-size: 0.82rem; color: var(--primary); font-weight: 600; background: rgba(108,58,224,0.08); padding: 6px 14px; border-radius: var(--radius-pill); display: inline-flex; align-items: center; gap: 6px;">
+          💡 Share these filters with your friends so they can easily find the same papers!
+        </span>
       </div>
     </div>
 
