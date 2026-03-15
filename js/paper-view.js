@@ -106,6 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           // Zoom state
           let touchScale = 1;
           let initialPinchDistance = 0;
+          let lastPinchTime = 0; // Prevent tap registering right after pinch
           
           const updateTransform = () => {
              // Ensure we don't zoom out past original size too much
@@ -128,7 +129,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           
           // Touch Event Listeners for pinch-to-zoom
           pdfContainer.addEventListener('touchstart', (e) => {
-             if (e.touches.length === 2) {
+             if (e.touches.length >= 2) {
                 initialPinchDistance = Math.hypot(
                    e.touches[0].clientX - e.touches[1].clientX,
                    e.touches[0].clientY - e.touches[1].clientY
@@ -137,7 +138,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           }, {passive: false});
 
           pdfContainer.addEventListener('touchmove', (e) => {
-             if (e.touches.length === 2) {
+             if (e.touches.length >= 2) {
                 e.preventDefault(); // Prevent default scroll when pinching
                 const currentDistance = Math.hypot(
                    e.touches[0].clientX - e.touches[1].clientX,
@@ -148,6 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                    const delta = currentDistance / initialPinchDistance;
                    touchScale *= delta;
                    initialPinchDistance = currentDistance;
+                   lastPinchTime = new Date().getTime(); // Mark that we just pinched
                    updateSize();
                 }
              }
@@ -163,8 +165,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           // Double tap to reset zoom
           let lastTap = 0;
           pdfContainer.addEventListener('touchend', (e) => {
+             const currentTime = new Date().getTime();
+             
+             // If we just finished a pinch zoom, ignore this as a tap to prevent accidental resets
+             if (currentTime - lastPinchTime < 300) {
+                 return; 
+             }
+             
              if (e.changedTouches.length === 1) {
-                const currentTime = new Date().getTime();
                 const tapLength = currentTime - lastTap;
                 if (tapLength < 500 && tapLength > 0) {
                    resetTransform();
@@ -287,20 +295,19 @@ document.addEventListener('DOMContentLoaded', async () => {
           // Start the flow
           fetchAndRenderPDF();
           
-          // Close button logic
+          // Close button logic - Return to previous page or specifically to papers.html
           const closeBtn = document.getElementById('closeViewer');
           if (closeBtn) {
             closeBtn.onclick = () => {
-              viewerModal.classList.remove('active');
-              document.body.style.overflow = '';
-              // Clean up the canvas and free memory
+              // Clean up memory before navigating
               ctx.clearRect(0, 0, canvas.width, canvas.height);
-              pdfContainer.style.display = 'none';
-              if (loader) {
-                 loader.style.display = 'flex';
-                 loader.innerHTML = `<div class="spinner"></div><span style="margin-top: 14px; font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">Loading secure viewer...</span>`;
-              }
               pdfDoc = null;
+              
+              if (document.referrer && document.referrer.includes('papers.html')) {
+                 window.history.back();
+              } else {
+                 window.location.href = 'papers.html';
+              }
             };
           }
         }

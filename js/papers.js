@@ -477,6 +477,7 @@
         // Zoom state
         let touchScale = 1;
         let initialPinchDistance = 0;
+        let lastPinchTime = 0; // Prevent tap registering right after pinch
         
         const updateTransform = () => {
            // Ensure we don't zoom out past original size too much
@@ -497,7 +498,7 @@
         
         // Touch Event Listeners for pinch-to-zoom
         pdfContainer.addEventListener('touchstart', (e) => {
-           if (e.touches.length === 2) {
+           if (e.touches.length >= 2) {
               initialPinchDistance = Math.hypot(
                  e.touches[0].clientX - e.touches[1].clientX,
                  e.touches[0].clientY - e.touches[1].clientY
@@ -506,7 +507,7 @@
         }, {passive: false});
 
         pdfContainer.addEventListener('touchmove', (e) => {
-           if (e.touches.length === 2) {
+           if (e.touches.length >= 2) {
               e.preventDefault(); // Prevent default scroll when pinching
               const currentDistance = Math.hypot(
                  e.touches[0].clientX - e.touches[1].clientX,
@@ -517,6 +518,7 @@
                  const delta = currentDistance / initialPinchDistance;
                  touchScale *= delta;
                  initialPinchDistance = currentDistance;
+                 lastPinchTime = new Date().getTime(); // Mark that we just pinched
                  updateSize();
               }
            }
@@ -531,8 +533,14 @@
         // Double tap to reset zoom
         let lastTap = 0;
         pdfContainer.addEventListener('touchend', (e) => {
+           const currentTime = new Date().getTime();
+           
+           // If we just finished a pinch zoom, ignore this as a tap to prevent accidental resets
+           if (currentTime - lastPinchTime < 300) {
+              return; 
+           }
+           
            if (e.changedTouches.length === 1) {
-              const currentTime = new Date().getTime();
               const tapLength = currentTime - lastTap;
               if (tapLength < 500 && tapLength > 0) {
                  resetTransform();
@@ -657,8 +665,19 @@
 
       }
     }
+    
+    // Add history state so native mobile back button closes modal
+    window.history.pushState({ modal: 'viewer' }, '', '#viewer');
     openModal('viewerModal');
   };
+  
+  // Listen for native back button to close modal
+  window.addEventListener('popstate', (e) => {
+    const viewerModal = document.getElementById('viewerModal');
+    if (viewerModal && viewerModal.classList.contains('active') && window.location.hash !== '#viewer') {
+       document.getElementById('closeViewer').click();
+    }
+  });
 
   if (document.getElementById('closeViewer')) {
     document.getElementById('closeViewer').addEventListener('click', () => {
@@ -682,6 +701,11 @@
       if (window._pdfDoc) {
         window._pdfDoc.destroy();
         window._pdfDoc = null;
+      }
+      
+      // Clean up URL if we closed via the button instead of native back
+      if (window.location.hash === '#viewer') {
+         window.history.replaceState('', document.title, window.location.pathname + window.location.search);
       }
     });
   }
