@@ -121,10 +121,19 @@
       if (!doc.exists) { postContent.innerHTML = '<p>Post not found.</p>'; return; }
       const p = { id: doc.id, ...doc.data() };
       let dateStr = '';
+      let isoDatePublished = '';
+      let isoDateModified = '';
       if (p.createdAt?.toDate) {
-        dateStr = p.createdAt.toDate().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+        const created = p.createdAt.toDate();
+        dateStr = created.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+        isoDatePublished = created.toISOString();
       } else if (p.createdAt) {
         dateStr = p.createdAt;
+      }
+      if (p.updatedAt?.toDate) {
+        isoDateModified = p.updatedAt.toDate().toISOString();
+      } else {
+        isoDateModified = isoDatePublished;
       }
       const date = dateStr;
 
@@ -133,6 +142,9 @@
       if (metaDesc) metaDesc.setAttribute('content', p.excerpt || p.title);
       const ogTitle = document.querySelector('meta[property="og:title"]');
       if (ogTitle) ogTitle.setAttribute('content', p.title);
+
+      // Inject Article structured data (JSON-LD) for Google
+      injectArticleSchema(p, isoDatePublished, isoDateModified);
 
       const titleEl = document.getElementById('postTitle');
       const metaEl = document.getElementById('postMeta');
@@ -145,10 +157,55 @@
         bodyEl.innerHTML = (p.coverImage ? `<img src="${escHtml(p.coverImage)}" alt="Cover" style="width:100%; max-height:400px; object-fit:cover; border-radius:12px; margin-bottom:20px;" />` : '') + (p.content || '');
       }
       if (tagsEl && p.tags) tagsEl.innerHTML = p.tags.map(t => `<span class="badge badge-purple">${escHtml(t)}</span>`).join('');
+
+      // Ping Google & Bing so they know site has updated content
+      pingSearchEngines();
     } catch (e) {
       console.error(e);
       postContent.innerHTML = '<p>Failed to load post.</p>';
     }
+  }
+
+  // ─── Inject Article JSON-LD Schema ─────
+  function injectArticleSchema(post, datePublished, dateModified) {
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": post.title || '',
+      "description": post.excerpt || post.title || '',
+      "author": { "@type": "Person", "name": post.author || 'Team RGPV' },
+      "publisher": {
+        "@type": "Organization",
+        "name": "RGPV Papers",
+        "url": "https://rgpvpyq.co.in"
+      },
+      "url": window.location.href,
+      "mainEntityOfPage": window.location.href,
+    };
+    if (datePublished) schema.datePublished = datePublished;
+    if (dateModified) schema.dateModified = dateModified;
+    if (post.coverImage) schema.image = post.coverImage;
+    if (post.tags && post.tags.length) schema.keywords = post.tags.join(', ');
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
+  }
+
+  // ─── Ping Google & Bing Sitemap ────────
+  function pingSearchEngines() {
+    const sitemapUrl = 'https://rgpvpyq.co.in/sitemap.xml';
+    const pings = [
+      `https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`,
+      `https://www.bing.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`,
+    ];
+    pings.forEach(url => {
+      fetch(url, { mode: 'no-cors' }).catch(() => {});
+    });
+    // IndexNow ping for Bing/Yandex with current page URL
+    fetch(`https://api.indexnow.org/indexnow?url=${encodeURIComponent(window.location.href)}&key=rgpvpyqcoinsitemap`, { mode: 'no-cors' }).catch(() => {});
+    console.log('[SEO] Search engines pinged for updated content');
   }
 
   // ─── Recent Blogs (homepage) ────────────
@@ -159,6 +216,8 @@
       if (!posts.length) { recentBlogsEl.innerHTML = '<p style="text-align:center;color:var(--text-muted)">No posts yet.</p>'; return; }
       recentBlogsEl.className = 'card-grid grid-3';
       recentBlogsEl.innerHTML = posts.map(renderBlogCard).join('');
+      // Ping search engines when homepage loads fresh blog content
+      pingSearchEngines();
     } catch (e) { console.error(e); }
   }
 
