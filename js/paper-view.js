@@ -74,68 +74,233 @@ document.addEventListener('DOMContentLoaded', async () => {
     const openBtn = document.getElementById('openViewerBtn');
     if (p.fileUrl && openBtn) {
       openBtn.addEventListener('click', () => {
-        const isPdf = p.fileType === 'pdf' || (p.fileName && p.fileName.toLowerCase().endsWith('.pdf')) || p.fileUrl.includes('.pdf');
-        
-        const src = isPdf 
-          ? `https://docs.google.com/viewer?url=${encodeURIComponent(p.fileUrl)}&embedded=true`
-          : p.fileUrl;
-          
         const viewerModal = document.getElementById('viewerModal');
-        const frame = document.getElementById('viewerFrame');
         const loader = viewerModal.querySelector('.viewer-loader');
+        const pdfContainer = document.getElementById('pdfContainer');
+        const canvas = document.getElementById('pdfCanvas');
         
-        if (viewerModal && frame) {
-          // Show loading state initially
-          frame.style.opacity = '0';
-          frame.style.transition = 'opacity 0.4s ease';
-          
-          let loaded = false;
-          let retryCount = 0;
-          const MAX_RETRIES = 3;
-          let viewerRetryTimer = null;
-
-          function onFrameLoad() {
-            loaded = true;
-            clearTimeout(viewerRetryTimer);
-            frame.style.opacity = '1';
-            if (loader) loader.style.display = 'none';
-          }
-
-          function tryLoad() {
-            loaded = false;
-            frame.style.opacity = '0';
-            if (loader) loader.style.display = 'flex';
-            
-            // Use a unique fragment to force iframe reload without busting Google's server cache
-            frame.src = isPdf ? src + '&_t=' + Date.now() : src;
-            frame.onload = onFrameLoad;
-
-            if (isPdf) {
-              // Auto-retry if not loaded after 5 seconds
-              viewerRetryTimer = setTimeout(() => {
-                if (!loaded && retryCount < MAX_RETRIES) {
-                  retryCount++;
-                  console.log(`PDF viewer: auto-retry ${retryCount}/${MAX_RETRIES}`);
-                  tryLoad();
-                }
-              }, 5000);
-            }
-          }
-
-          setTimeout(tryLoad, 50);
-          
-          // Open Modal
+        // Viewer UI Controls
+        const pagination = viewerModal.querySelector('.viewer-pagination');
+        const pageNumSpan = document.getElementById('pageNum');
+        const pageCountSpan = document.getElementById('pageCount');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const zoomInBtn = document.getElementById('zoomIn');
+        const zoomOutBtn = document.getElementById('zoomOut');
+        
+        if (viewerModal && canvas) {
+          // Open Modal & Reset UI State
           viewerModal.classList.add('active');
           document.body.style.overflow = 'hidden';
+          
+          if (loader) loader.style.display = 'flex';
+          pdfContainer.style.display = 'none';
+          [pagination, prevPageBtn, nextPageBtn, zoomInBtn, zoomOutBtn].forEach(el => el && (el.style.display = 'none'));
+          
+          let pdfDoc = null;
+          let pageNum = 1;
+          let currentScale = 1.2; // Default render scale
+          let isRendering = false;
+          let pageNumPending = null;
+          
+          // Zoom state
+          let touchScale = 1;
+          let initialPinchDistance = 0;
+          
+          const updateTransform = () => {
+             // Ensure we don't zoom out past original size too much
+             touchScale = Math.max(1, Math.min(touchScale, 5));
+             canvas.style.width = (100 * touchScale) + '%';
+             canvas.style.transform = `scale(${touchScale})`;
+          };
+          
+          // Actually setting width is better for layout, but transform is faster 
+          // We will use CSS width so scrolling natively works.
+          const updateSize = () => {
+             touchScale = Math.max(1, Math.min(touchScale, 5));
+             canvas.style.width = (100 * touchScale) + '%';
+          };
+
+          const resetTransform = () => {
+             touchScale = 1;
+             updateSize();
+          };
+          
+          // Touch Event Listeners for pinch-to-zoom
+          pdfContainer.addEventListener('touchstart', (e) => {
+             if (e.touches.length === 2) {
+                initialPinchDistance = Math.hypot(
+                   e.touches[0].clientX - e.touches[1].clientX,
+                   e.touches[0].clientY - e.touches[1].clientY
+                );
+             }
+          }, {passive: false});
+
+          pdfContainer.addEventListener('touchmove', (e) => {
+             if (e.touches.length === 2) {
+                e.preventDefault(); // Prevent default scroll when pinching
+                const currentDistance = Math.hypot(
+                   e.touches[0].clientX - e.touches[1].clientX,
+                   e.touches[0].clientY - e.touches[1].clientY
+                );
+                
+                if (initialPinchDistance > 0) {
+                   const delta = currentDistance / initialPinchDistance;
+                   touchScale *= delta;
+                   initialPinchDistance = currentDistance;
+                   updateSize();
+                }
+             }
+             // For 1 finger, do nothing so the browser can natively scroll!
+          }, {passive: false});
+          
+          pdfContainer.addEventListener('touchend', (e) => {
+             if (e.touches.length < 2) {
+                initialPinchDistance = 0;
+             }
+          });
+          
+          // Double tap to reset zoom
+          let lastTap = 0;
+          pdfContainer.addEventListener('touchend', (e) => {
+             if (e.changedTouches.length === 1) {
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTap;
+                if (tapLength < 500 && tapLength > 0) {
+                   resetTransform();
+                   e.preventDefault();
+                }
+                lastTap = currentTime;
+             }
+          });
+
+          const ctx = canvas.getContext('2d');
+          
+          // Render the page
+          const renderPage = (num) => {
+            isRendering = true;
+            
+            // Fetch page
+            pdfDoc.getPage(num).then((page) => {
+              const viewport = page.getViewport({ scale: currentScale });
+              canvas.height = viewport.height;
+              canvas.width = viewport.width;
+              
+              const renderContext = {
+                canvasContext: ctx,
+                viewport: viewport
+              };
+              
+              const renderTask = page.render(renderContext);
+              
+              renderTask.promise.then(() => {
+                isRendering = false;
+                if (loader) loader.style.display = 'none';
+                pdfContainer.style.display = 'block';
+                
+                // Show/Hide controls
+                [pagination, prevPageBtn, nextPageBtn, zoomInBtn, zoomOutBtn].forEach(el => el && (el.style.display = 'flex'));
+                if (pageNumSpan) pageNumSpan.textContent = num;
+                
+                // Next/Prev buttons state
+                if (prevPageBtn) prevPageBtn.disabled = num <= 1;
+                if (nextPageBtn) nextPageBtn.disabled = num >= pdfDoc.numPages;
+                
+                if (pageNumPending !== null) {
+                  renderPage(pageNumPending);
+                  pageNumPending = null;
+                }
+              });
+            }).catch(err => {
+              console.error("Error rendering PDF page:", err);
+              isRendering = false;
+              if (loader) loader.innerHTML = `<span style="color:var(--danger)">Error rendering PDF. Please try again later.</span>`;
+            });
+          };
+
+          const queueRenderPage = (num) => {
+            if (isRendering) {
+              pageNumPending = num;
+            } else {
+              renderPage(num);
+            }
+          };
+
+          const onPrevPage = () => {
+            if (pageNum <= 1) return;
+            pageNum--;
+            resetTransform();
+            queueRenderPage(pageNum);
+          };
+
+          const onNextPage = () => {
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            resetTransform();
+            queueRenderPage(pageNum);
+          };
+          
+          const onZoomIn = () => {
+             touchScale += 0.5;
+             updateSize();
+          };
+          
+          const onZoomOut = () => {
+             touchScale -= 0.5;
+             updateSize();
+          };
+
+          // Attach event listeners natively to buttons
+          if (prevPageBtn) prevPageBtn.onclick = onPrevPage;
+          if (nextPageBtn) nextPageBtn.onclick = onNextPage;
+          if (zoomInBtn) zoomInBtn.onclick = onZoomIn;
+          if (zoomOutBtn) zoomOutBtn.onclick = onZoomOut;
+
+          // Fetch the PDF using pdf.js
+          const fetchAndRenderPDF = async () => {
+             try {
+                // Ensure pdf.js is loaded
+                if (!window.pdfjsLib) {
+                   throw new Error("PDF.js library failed to load");
+                }
+                
+                const loadingTask = window.pdfjsLib.getDocument(p.fileUrl);
+                pdfDoc = await loadingTask.promise;
+                
+                if (pageCountSpan) pageCountSpan.textContent = pdfDoc.numPages;
+                
+                // Render first page
+                renderPage(pageNum);
+                
+             } catch (error) {
+                console.error("Error loading PDF:", error);
+                if (loader) {
+                   loader.innerHTML = `
+                     <span style="color:var(--danger); text-align:center;">
+                       Error loading document.<br>
+                       <small style="color:var(--text-muted);">${error.message}</small>
+                     </span>`;
+                }
+             }
+          };
+          
+          // Start the flow
+          fetchAndRenderPDF();
           
           // Close button logic
           const closeBtn = document.getElementById('closeViewer');
           if (closeBtn) {
             closeBtn.onclick = () => {
-              clearTimeout(viewerRetryTimer);
               viewerModal.classList.remove('active');
               document.body.style.overflow = '';
-              setTimeout(() => { if (frame) frame.src = ''; }, 300);
+              // Clean up the canvas and free memory
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              pdfContainer.style.display = 'none';
+              if (loader) {
+                 loader.style.display = 'flex';
+                 loader.innerHTML = `<div class="spinner"></div><span style="margin-top: 14px; font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">Loading secure viewer...</span>`;
+              }
+              pdfDoc = null;
             };
           }
         }

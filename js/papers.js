@@ -445,47 +445,217 @@
     clearTimeout(viewerLoadTimer);
 
     if (viewerFrame) {
-      const src = type === 'pdf'
-        ? `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`
-        : url;
+      const pdfContainer = document.getElementById('pdfContainer');
+      const canvas = document.getElementById('pdfCanvas');
+      
+      // Viewer UI Controls
+      const pagination = viewerModal.querySelector('.viewer-pagination');
+      const pageNumSpan = document.getElementById('pageNum');
+      const pageCountSpan = document.getElementById('pageCount');
+      const prevPageBtn = document.getElementById('prevPage');
+      const nextPageBtn = document.getElementById('nextPage');
+      const zoomInBtn = document.getElementById('zoomIn');
+      const zoomOutBtn = document.getElementById('zoomOut');
 
-      // Show loading state
-      viewerFrame.style.opacity = '0';
-      viewerFrame.style.transition = 'opacity 0.4s ease';
-      viewerFrame.src = '';
-      const loader = getViewerLoader();
-      if (loader) loader.style.display = 'flex';
-
-      let loaded = false;
-      let retryCount = 0;
-      const MAX_RETRIES = 3;
-
-      function onFrameLoad() {
-        loaded = true;
-        clearTimeout(viewerRetryTimer);
-        viewerFrame.style.opacity = '1';
-        if (loader) loader.style.display = 'none';
-      }
-
-      function tryLoad() {
-        loaded = false;
-        viewerFrame.style.opacity = '0';
+      if (viewerModal && canvas) {
+        // Open Modal & Reset UI State
+        viewerModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        const loader = getViewerLoader();
         if (loader) loader.style.display = 'flex';
-        // Use a unique fragment to force iframe reload without busting Google's server cache
-        viewerFrame.src = src + '&_t=' + Date.now();
-        viewerFrame.onload = onFrameLoad;
+        pdfContainer.style.display = 'none';
+        [pagination, prevPageBtn, nextPageBtn, zoomInBtn, zoomOutBtn].forEach(el => el && (el.style.display = 'none'));
+        
+        // Use standard window scope variables for viewer state
+        window._pdfDoc = null;
+        window._pdfPageNum = 1;
+        window._pdfScale = 1.2; // Default render scale
+        let isRendering = false;
+        let pageNumPending = null;
+        
+        // Zoom state
+        let touchScale = 1;
+        let initialPinchDistance = 0;
+        
+        const updateTransform = () => {
+           // Ensure we don't zoom out past original size too much
+           touchScale = Math.max(1, Math.min(touchScale, 5));
+           canvas.style.width = (100 * touchScale) + '%';
+           canvas.style.transform = `scale(${touchScale})`;
+        };
 
-        // Auto-retry if not loaded after 5 seconds
-        viewerRetryTimer = setTimeout(() => {
-          if (!loaded && retryCount < MAX_RETRIES) {
-            retryCount++;
-            console.log(`PDF viewer: auto-retry ${retryCount}/${MAX_RETRIES}`);
-            tryLoad();
+        const updateSize = () => {
+           touchScale = Math.max(1, Math.min(touchScale, 5));
+           canvas.style.width = (100 * touchScale) + '%';
+        };
+
+        const resetTransform = () => {
+           touchScale = 1;
+           updateSize();
+        };
+        
+        // Touch Event Listeners for pinch-to-zoom
+        pdfContainer.addEventListener('touchstart', (e) => {
+           if (e.touches.length === 2) {
+              initialPinchDistance = Math.hypot(
+                 e.touches[0].clientX - e.touches[1].clientX,
+                 e.touches[0].clientY - e.touches[1].clientY
+              );
+           }
+        }, {passive: false});
+
+        pdfContainer.addEventListener('touchmove', (e) => {
+           if (e.touches.length === 2) {
+              e.preventDefault(); // Prevent default scroll when pinching
+              const currentDistance = Math.hypot(
+                 e.touches[0].clientX - e.touches[1].clientX,
+                 e.touches[0].clientY - e.touches[1].clientY
+              );
+              
+              if (initialPinchDistance > 0) {
+                 const delta = currentDistance / initialPinchDistance;
+                 touchScale *= delta;
+                 initialPinchDistance = currentDistance;
+                 updateSize();
+              }
+           }
+        }, {passive: false});
+        
+        pdfContainer.addEventListener('touchend', (e) => {
+           if (e.touches.length < 2) {
+              initialPinchDistance = 0;
+           }
+        });
+        
+        // Double tap to reset zoom
+        let lastTap = 0;
+        pdfContainer.addEventListener('touchend', (e) => {
+           if (e.changedTouches.length === 1) {
+              const currentTime = new Date().getTime();
+              const tapLength = currentTime - lastTap;
+              if (tapLength < 500 && tapLength > 0) {
+                 resetTransform();
+                 e.preventDefault();
+              }
+              lastTap = currentTime;
+           }
+        });
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Render the page
+        const renderPage = (num) => {
+          isRendering = true;
+          
+          // Fetch page
+          window._pdfDoc.getPage(num).then((page) => {
+            const viewport = page.getViewport({ scale: window._pdfScale });
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            const renderContext = {
+              canvasContext: ctx,
+              viewport: viewport
+            };
+            
+            const renderTask = page.render(renderContext);
+            
+            renderTask.promise.then(() => {
+              isRendering = false;
+              if (loader) loader.style.display = 'none';
+              pdfContainer.style.display = 'block';
+              
+              // Show/Hide controls
+              [pagination, prevPageBtn, nextPageBtn, zoomInBtn, zoomOutBtn].forEach(el => el && (el.style.display = 'flex'));
+              if (pageNumSpan) pageNumSpan.textContent = num;
+              
+              // Next/Prev buttons state
+              if (prevPageBtn) prevPageBtn.disabled = num <= 1;
+              if (nextPageBtn) nextPageBtn.disabled = num >= window._pdfDoc.numPages;
+              
+              if (pageNumPending !== null) {
+                renderPage(pageNumPending);
+                pageNumPending = null;
+              }
+            });
+          }).catch(err => {
+            console.error("Error rendering PDF page:", err);
+            isRendering = false;
+            if (loader) loader.innerHTML = `<span style="color:var(--danger)">Error rendering PDF. Please try again later.</span>`;
+          });
+        };
+
+        const queueRenderPage = (num) => {
+          if (isRendering) {
+            pageNumPending = num;
+          } else {
+            renderPage(num);
           }
-        }, 5000);
-      }
+        };
 
-      setTimeout(tryLoad, 50);
+        const onPrevPage = () => {
+          if (window._pdfPageNum <= 1) return;
+          window._pdfPageNum--;
+          resetTransform();
+          queueRenderPage(window._pdfPageNum);
+        };
+
+        const onNextPage = () => {
+          if (window._pdfPageNum >= window._pdfDoc.numPages) return;
+          window._pdfPageNum++;
+          resetTransform();
+          queueRenderPage(window._pdfPageNum);
+        };
+        
+        const onZoomIn = () => {
+           touchScale += 0.5;
+           updateSize();
+        };
+        
+        const onZoomOut = () => {
+           touchScale -= 0.5;
+           updateSize();
+        };
+
+        // Attach event listeners natively to buttons
+        if (prevPageBtn) prevPageBtn.onclick = onPrevPage;
+        if (nextPageBtn) nextPageBtn.onclick = onNextPage;
+        if (zoomInBtn) zoomInBtn.onclick = onZoomIn;
+        if (zoomOutBtn) zoomOutBtn.onclick = onZoomOut;
+
+        // Fetch the PDF using pdf.js
+        const fetchAndRenderPDF = async () => {
+           try {
+              // Ensure pdf.js is loaded
+              if (!window.pdfjsLib) {
+                 throw new Error("PDF.js library failed to load");
+              }
+              
+              const loadingTask = window.pdfjsLib.getDocument(url);
+              window._pdfDoc = await loadingTask.promise;
+              
+              if (pageCountSpan) pageCountSpan.textContent = window._pdfDoc.numPages;
+              
+              // Render first page
+              renderPage(window._pdfPageNum);
+              
+           } catch (error) {
+              console.error("Error loading PDF:", error);
+              if (loader) {
+                 loader.innerHTML = `
+                   <span style="color:var(--danger); text-align:center;">
+                     Error loading document.<br>
+                     <small style="color:var(--text-muted);">${error.message}</small>
+                   </span>`;
+              }
+           }
+        };
+        
+        // Start the flow
+        fetchAndRenderPDF();
+
+      }
     }
     openModal('viewerModal');
   };
@@ -495,7 +665,24 @@
       clearTimeout(viewerRetryTimer);
       clearTimeout(viewerLoadTimer);
       closeModal('viewerModal');
-      setTimeout(() => { if (viewerFrame) viewerFrame.src = ''; }, 300);
+      
+      const canvas = document.getElementById('pdfCanvas');
+      const pdfContainer = document.getElementById('pdfContainer');
+      const loader = getViewerLoader();
+      
+      if (canvas && pdfContainer) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pdfContainer.style.display = 'none';
+      }
+      if (loader) {
+         loader.style.display = 'flex';
+         loader.innerHTML = `<div class="spinner"></div><span style="margin-top: 14px; font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">Loading secure viewer...</span>`;
+      }
+      if (window._pdfDoc) {
+        window._pdfDoc.destroy();
+        window._pdfDoc = null;
+      }
     });
   }
 
