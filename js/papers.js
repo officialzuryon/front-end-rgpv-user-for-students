@@ -176,27 +176,44 @@
       // ─── Read Filters from URL ────────────────
       const urlParams = new URLSearchParams(window.location.search);
       let hasUrlFilters = false;
+
+      // Helper to set dropdown by ID (value) OR Name (text)
+      const syncDropdown = (el, val) => {
+        if (!el || !val) return false;
+        // Try exact match (ID)
+        el.value = val;
+        // If no match (dropdown resets to index 0), try matching text
+        if (el.selectedIndex <= 0 && val.length > 1) {
+          const lowerVal = val.toLowerCase().trim();
+          for (let i = 0; i < el.options.length; i++) {
+            const opt = el.options[i];
+            if (opt.textContent.toLowerCase().trim() === lowerVal) {
+              el.selectedIndex = i;
+              return true;
+            }
+          }
+        }
+        return el.value === val;
+      };
       
-      if (urlParams.has('university') && filterUniversity) {
-          filterUniversity.value = urlParams.get('university');
-          hasUrlFilters = true;
+      if (urlParams.has('university')) {
+          if (syncDropdown(filterUniversity, urlParams.get('university'))) hasUrlFilters = true;
       }
-      if (urlParams.has('degree') && filterDegree) {
-          filterDegree.value = urlParams.get('degree');
-          await loadBranches(filterUniversity?.value, filterDegree.value);
-          hasUrlFilters = true;
+      if (urlParams.has('degree')) {
+          if (syncDropdown(filterDegree, urlParams.get('degree'))) {
+            // Reload branches for this degree before trying to sync branch
+            await loadBranches(filterUniversity?.value, filterDegree.value);
+            hasUrlFilters = true;
+          }
       }
-      if (urlParams.has('branch') && filterBranch) {
-          filterBranch.value = urlParams.get('branch');
-          hasUrlFilters = true;
+      if (urlParams.has('branch')) {
+          if (syncDropdown(filterBranch, urlParams.get('branch'))) hasUrlFilters = true;
       }
-      if (urlParams.has('semester') && filterSemester) {
-          filterSemester.value = urlParams.get('semester');
-          hasUrlFilters = true;
+      if (urlParams.has('semester')) {
+          if (syncDropdown(filterSemester, urlParams.get('semester'))) hasUrlFilters = true;
       }
-      if (urlParams.has('year') && filterYear) {
-          filterYear.value = urlParams.get('year');
-          hasUrlFilters = true;
+      if (urlParams.has('year')) {
+          if (syncDropdown(filterYear, urlParams.get('year'))) hasUrlFilters = true;
       }
       if (urlParams.has('code') && filterCode) {
           filterCode.value = urlParams.get('code');
