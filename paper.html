@@ -10,14 +10,24 @@
     content="Search and view RGPV previous year question papers by branch, subject, semester, year and paper code. Free, no download required." />
   <meta name="keywords" content="RGPV papers, search question papers, RGPV semester papers, branch wise papers" />
   <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://rgpvpyq.co.in/papers.html" />
+  <!-- Dynamic canonical set by JS based on ?id= param -->
+  <link rel="canonical" id="pageCanonical" href="https://rgpvpyq.co.in/paper" />
+  <script>
+    (function() {
+      var id = new URLSearchParams(window.location.search).get('id');
+      if (id) {
+        var c = document.getElementById('pageCanonical');
+        if (c) c.setAttribute('href', 'https://rgpvpyq.co.in/paper?id=' + encodeURIComponent(id));
+      }
+    })();
+  </script>
 
   <!-- OG -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Search RGPV Papers — Browse by Branch, Semester, Year" />
   <meta property="og:description"
     content="Filter thousands of RGPV question papers by branch, subject, semester, year and code. View instantly in browser." />
-  <meta property="og:url" content="https://rgpvpyq.co.in/papers.html" />
+  <meta property="og:url" content="https://rgpvpyq.co.in/paper" />
   <meta property="og:image" content="https://rgpvpyq.co.in/assets/og-image.jpg" />
   <meta name="twitter:card" content="summary_large_image" />
 
