@@ -315,11 +315,21 @@
     };
 
     const fuzzyMatch = (token, searchIndexStr) => {
-      if (searchIndexStr.includes(token)) return true;
-      if (token.length <= 3) return false; // Too short for fuzzy correction
       const words = searchIndexStr.split(/\s+/);
+      
+      // If token is very short or purely numbers (like "3" or "2023"), exact full-word match prevents "3" from matching "2023".
+      if (token.length <= 2 || /^\d+$/.test(token)) {
+        return words.includes(token);
+      }
+      
+      // For longer alphanumeric tokens, allow substring match
+      if (searchIndexStr.includes(token)) return true;
+      
+      // Do not allow fuzzy match if string contains digits (e.g. "3sem" should not match "4sem")
+      if (/\d/.test(token)) return false; 
+      
+      // Fuzzy match for typos in long words
       for (const word of words) {
-        // allow 1 typo for words of length 4+
         if (word.length >= 4 && Math.abs(word.length - token.length) <= 1) {
           if (getEditDistance(token, word) <= 1) return true;
         }
@@ -360,20 +370,24 @@
         const searchIndex = [
           title, pCode, pSubject, paperBranchName, paperUnivName, pSem, pYear,
           (p.degree || '').toLowerCase(),
-          `sem ${pSem}`, `semester ${pSem}`, `${pSem}sem`,
+          `sem ${pSem}`, `semester ${pSem}`, `${pSem}sem`, `sem${pSem}`,
+          `${pSem}semester`, `semester${pSem}`,
           `${pSem}st`, `${pSem}nd`, `${pSem}rd`, `${pSem}th`,
-          `year ${pYear}`
+          `year ${pYear}`, `${pYear}year`, `year${pYear}`
         ].join(' ');
 
         queryTokens.forEach(token => {
           let matched = false;
+          // Avoid matching single digits like "3" against substrings like "CS-403" or "2023"
+          const isShortNum = token.length <= 2 && /^\d+$/.test(token);
+
           // Exact matches in primary fields are worth the most
           if (pCode === token) { searchScore += 10; matched = true; }
-          else if (pCode.includes(token)) { searchScore += 5; matched = true; }
+          else if (!isShortNum && pCode.includes(token)) { searchScore += 5; matched = true; }
           else if (pSubject === token) { searchScore += 8; matched = true; }
-          else if (pSubject.includes(token)) { searchScore += 4; matched = true; }
+          else if (!isShortNum && pSubject.includes(token)) { searchScore += 4; matched = true; }
           else if (title === token) { searchScore += 6; matched = true; }
-          else if (title.includes(token)) { searchScore += 3; matched = true; }
+          else if (!isShortNum && title.includes(token)) { searchScore += 3; matched = true; }
           // Fallback to omni-search for branches, years, semesters, universities (with typo tolerance!)
           else if (fuzzyMatch(token, searchIndex)) { searchScore += 1; matched = true; }
 
@@ -405,6 +419,11 @@
     // Build new URL only if we actually have filters, otherwise revert to base path
     const paramString = urlParams.toString();
     const newUrl = window.location.pathname + (paramString ? '?' + paramString : '');
+
+    // Apply exact query string to all Advanced Search navigation links
+    document.querySelectorAll('.advanced-search-link').forEach(link => {
+       link.href = 'papers.html' + (paramString ? '?' + paramString : '');
+    });
 
     // Only update if we aren't currently viewing a PDF so we don't clobber the #viewer state
     if (window.location.hash !== '#viewer') {
