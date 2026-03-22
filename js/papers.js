@@ -45,8 +45,14 @@
   // ─── Load Universities ──────────────────
   async function loadUniversities() {
     try {
-      const snap = await db.collection('universities').orderBy('name').get();
-      universities = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const cached = sessionStorage.getItem('pyq_univs');
+      if (cached) {
+        universities = JSON.parse(cached);
+      } else {
+        const snap = await db.collection('universities').orderBy('name').get();
+        universities = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        sessionStorage.setItem('pyq_univs', JSON.stringify(universities));
+      }
       if (filterUniversity) {
         universities.forEach(u => {
           const opt = document.createElement('option');
@@ -99,8 +105,14 @@
     try {
       // 1. Fetch once and cache globally to avoid Firebase Missing Index errors
       if (!allBranchesCache) {
-        const snap = await db.collection('branches').orderBy('name').get();
-        allBranchesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const cached = sessionStorage.getItem('pyq_branches');
+        if (cached) {
+          allBranchesCache = JSON.parse(cached);
+        } else {
+          const snap = await db.collection('branches').orderBy('name').get();
+          allBranchesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          sessionStorage.setItem('pyq_branches', JSON.stringify(allBranchesCache));
+        }
       }
 
       let branchList = [...allBranchesCache];
@@ -154,12 +166,18 @@
   async function loadDegrees() {
     if (!filterDegree) return;
     try {
-      // Fetch without orderBy to prevent Missing Index crash
-      const snap = await db.collection('degrees').get();
-      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-      // Sort locally
-      docs.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      let docs;
+      const cached = sessionStorage.getItem('pyq_degrees');
+      if (cached) {
+        docs = JSON.parse(cached);
+      } else {
+        // Fetch without orderBy to prevent Missing Index crash
+        const snap = await db.collection('degrees').get();
+        docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Sort locally
+        docs.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        sessionStorage.setItem('pyq_degrees', JSON.stringify(docs));
+      }
 
       docs.forEach(d => {
         const opt = document.createElement('option');
@@ -173,8 +191,19 @@
   async function loadPapers() {
     showLoading(true);
     try {
-      const snap = await db.collection('papers').orderBy('createdAt', 'desc').get();
-      allPapers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const cached = sessionStorage.getItem('pyq_papers');
+      const cacheTime = sessionStorage.getItem('pyq_papers_time');
+      const now = Date.now();
+      if (cached && cacheTime && (now - parseInt(cacheTime) < 15 * 60 * 1000)) { // 15 mins cache
+        allPapers = JSON.parse(cached);
+      } else {
+        const snap = await db.collection('papers').orderBy('createdAt', 'desc').get();
+        allPapers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        try {
+          sessionStorage.setItem('pyq_papers', JSON.stringify(allPapers));
+          sessionStorage.setItem('pyq_papers_time', now.toString());
+        } catch (e) { console.warn('sessionStorage full'); }
+      }
 
       // ─── Read Filters from URL ────────────────
       const urlParams = new URLSearchParams(window.location.search);
@@ -266,7 +295,39 @@
     if (subj) activeFilters.subject = subj;
     if (deg) activeFilters.degree = deg;
 
-    const queryTokens = activeSearchQuery ? activeSearchQuery.split(/\s+/).filter(Boolean) : [];
+    // Levenshtein distance helper
+    const getEditDistance = (a, b) => {
+      if (a.length === 0) return b.length;
+      if (b.length === 0) return a.length;
+      const matrix = [];
+      for (let i = 0; i <= b.length; i++) { matrix[i] = [i]; }
+      for (let j = 0; j <= a.length; j++) { matrix[0][j] = j; }
+      for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+          if (b.charAt(i - 1) === a.charAt(j - 1)) {
+            matrix[i][j] = matrix[i - 1][j - 1];
+          } else {
+            matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+          }
+        }
+      }
+      return matrix[b.length][a.length];
+    };
+
+    const fuzzyMatch = (token, searchIndexStr) => {
+      if (searchIndexStr.includes(token)) return true;
+      if (token.length <= 3) return false; // Too short for fuzzy correction
+      const words = searchIndexStr.split(/\s+/);
+      for (const word of words) {
+        // allow 1 typo for words of length 4+
+        if (word.length >= 4 && Math.abs(word.length - token.length) <= 1) {
+          if (getEditDistance(token, word) <= 1) return true;
+        }
+      }
+      return false;
+    };
+
+    const queryTokens = activeSearchQuery ? activeSearchQuery.replace(/[,+.]/g, ' ').split(/\s+/).filter(Boolean) : [];
 
     filteredPapers = allPapers.map(p => {
       const title = (p.title || '').toLowerCase();
@@ -282,6 +343,7 @@
       // Match by branch Name instead of ID, since branches are global per degree
       let paperBranchName = (branches.find(b => b.id === pBranch)?.name || p.branch || '').toLowerCase().trim();
       let selectedBranchName = (branches.find(b => b.id === bId)?.name || '').toLowerCase().trim();
+      let paperUnivName = (universities.find(u => u.id === pUniv)?.name || pUniv || '').toLowerCase().trim();
       const matchB = !bId || (paperBranchName === selectedBranchName);
       const matchS = !sem || pSem === sem;
       const matchY = !yr || pYear === yr;
@@ -293,24 +355,33 @@
       let searchScore = 0;
       if (queryTokens.length > 0) {
         let tokenMatches = 0;
+        
+        // Build a massive searchable "index" string for omni-search
+        const searchIndex = [
+          title, pCode, pSubject, paperBranchName, paperUnivName, pSem, pYear,
+          (p.degree || '').toLowerCase(),
+          `sem ${pSem}`, `semester ${pSem}`, `${pSem}sem`,
+          `${pSem}st`, `${pSem}nd`, `${pSem}rd`, `${pSem}th`,
+          `year ${pYear}`
+        ].join(' ');
+
         queryTokens.forEach(token => {
           let matched = false;
-          // Exact matches are worth the most
+          // Exact matches in primary fields are worth the most
           if (pCode === token) { searchScore += 10; matched = true; }
           else if (pCode.includes(token)) { searchScore += 5; matched = true; }
-
-          if (pSubject === token) { searchScore += 8; matched = true; }
+          else if (pSubject === token) { searchScore += 8; matched = true; }
           else if (pSubject.includes(token)) { searchScore += 4; matched = true; }
-
-          if (title === token) { searchScore += 6; matched = true; }
+          else if (title === token) { searchScore += 6; matched = true; }
           else if (title.includes(token)) { searchScore += 3; matched = true; }
+          // Fallback to omni-search for branches, years, semesters, universities (with typo tolerance!)
+          else if (fuzzyMatch(token, searchIndex)) { searchScore += 1; matched = true; }
 
           if (matched) tokenMatches++;
         });
 
-        // If a query exists, it MUST match at least partially (score > 0)
-        // You can make this stricter by requiring (tokenMatches === queryTokens.length)
-        if (searchScore === 0) return null;
+        // If a query exists, it MUST match all tokens for highly relevant results (AND logic)
+        if (tokenMatches !== queryTokens.length) return null;
       }
 
       // If it passes dropdown filters
@@ -440,7 +511,7 @@
           <button onclick="sharePaper('${escHtml(p.title || p.subject || 'Paper')}', 'paper.html?id=${p.id}')" class="btn-share" aria-label="Share paper">
             ${SHARE_ICON}<span class="share-label">Share</span>
           </button>
-          <a href="paper.html?id=${p.id}" class="btn btn-primary" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
+          <a href="paper.html?id=${p.id}" class="btn btn-primary" target="_blank" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
             👁 View
           </a>
         </div>
@@ -974,7 +1045,7 @@
                 <button onclick="sharePaper('${escHtml(p.title || p.subject || 'Paper')}', 'paper.html?id=${p.id}')" class="btn-share" aria-label="Share paper">
                   ${SHARE_ICON}<span class="share-label">Share</span>
                 </button>
-                <a href="paper.html?id=${p.id}" class="btn btn-primary" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
+                <a href="paper.html?id=${p.id}" class="btn btn-primary" target="_blank" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
                   👁 View
                 </a>
               </div>

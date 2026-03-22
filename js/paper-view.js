@@ -295,19 +295,16 @@ document.addEventListener('DOMContentLoaded', async () => {
           // Start the flow
           fetchAndRenderPDF();
           
-          // Close button logic - Return to previous page or specifically to papers.html
+          // Close button logic - Return to the paper details view
           const closeBtn = document.getElementById('closeViewer');
           if (closeBtn) {
             closeBtn.onclick = () => {
-              // Clean up memory before navigating
+              // Clean up memory
               ctx.clearRect(0, 0, canvas.width, canvas.height);
               pdfDoc = null;
               
-              if (document.referrer && document.referrer.includes('papers.html')) {
-                 window.history.back();
-              } else {
-                 window.location.href = 'papers.html';
-              }
+              viewerModal.classList.remove('active');
+              document.body.style.overflow = '';
             };
           }
         }
