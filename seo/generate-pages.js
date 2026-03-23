@@ -346,7 +346,7 @@ function generatePage(subject) {
               </div>
               <div class="paper-card-footer">
                 <span class="badge badge-purple">\${escHtml(p.subject || '—')}</span>
-                <a href="../papers.html?code=\${encodeURIComponent(p.code || '')}" class="view-btn">👁 View Paper</a>
+                <a href="../paper/\${p.id}" class="view-btn">👁 View Paper</a>
               </div>
             </article>\`).join('');
         })

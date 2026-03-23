@@ -527,10 +527,10 @@
       <div class="paper-card-footer">
         <span class="badge badge-purple">${escHtml(p.subject || '—')}</span>
         <div style="display: flex; gap: 8px; align-items: center;">
-          <button onclick="sharePaper('${escHtml(p.title || p.subject || 'Paper')}', 'paper.html?id=${p.id}')" class="btn-share" aria-label="Share paper">
+          <button onclick="sharePaper('${escHtml(p.title || p.subject || 'Paper')}', '/paper/${p.id}')" class="btn-share" aria-label="Share paper">
             ${SHARE_ICON}<span class="share-label">Share</span>
           </button>
-          <a href="paper.html?id=${p.id}" class="btn btn-primary" target="_blank" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
+          <a href="/paper/${p.id}" class="btn btn-primary" target="_blank" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
             👁 View
           </a>
         </div>
@@ -1061,10 +1061,10 @@
             <div class="paper-card-footer">
               <span class="badge badge-purple">${escHtml(p.subject || '—')}</span>
               <div style="display: flex; gap: 8px; align-items: center;">
-                <button onclick="sharePaper('${escHtml(p.title || p.subject || 'Paper')}', 'paper.html?id=${p.id}')" class="btn-share" aria-label="Share paper">
+                <button onclick="sharePaper('${escHtml(p.title || p.subject || 'Paper')}', '/paper/${p.id}')" class="btn-share" aria-label="Share paper">
                   ${SHARE_ICON}<span class="share-label">Share</span>
                 </button>
-                <a href="paper.html?id=${p.id}" class="btn btn-primary" target="_blank" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
+                <a href="/paper/${p.id}" class="btn btn-primary" target="_blank" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
                   👁 View
                 </a>
               </div>

@@ -1,7 +1,16 @@
 // paper-view.js - Standalone viewer for a single paper
 document.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
-  const paperId = urlParams.get('id');
+  let paperId = urlParams.get('id');
+
+  // Fallback to strict path extraction for SEO clean URLs (e.g. /paper/Xyz123)
+  if (!paperId) {
+    const pathParts = window.location.pathname.split('/');
+    const lastPart = pathParts[pathParts.length - 1];
+    if (lastPart && lastPart !== 'paper.html' && lastPart !== 'paper') {
+       paperId = lastPart.replace('.html', '');
+    }
+  }
   
   const loadingState = document.getElementById('loadingState');
   const errorState = document.getElementById('errorState');
