@@ -14,6 +14,7 @@
   let universities = [];
   let branches = [];
   let currentPage = 1;
+  let isDataLoaded = false;
   const PAGE_SIZE = 12;
   let sortField = 'title';
   let sortDir = 'asc';
@@ -205,6 +206,8 @@
         } catch (e) { console.warn('sessionStorage full'); }
       }
 
+      isDataLoaded = true;
+
       // ─── Read Filters from URL ────────────────
       const urlParams = new URLSearchParams(window.location.search);
       let hasUrlFilters = false;
@@ -277,6 +280,11 @@
   let activeSearchQuery = '';
 
   function applyFilters() {
+    if (!isDataLoaded) {
+      showLoading(true);
+      return;
+    }
+
     const uId = filterUniversity?.value || '';
     const bId = filterBranch?.value || '';
     const sem = filterSemester?.value || '';
