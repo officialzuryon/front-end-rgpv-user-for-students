@@ -177,4 +177,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  /* ─── Global AdSense Lazy Loader ─────── */
+  // Load AdSense after page load to prevent LCP blocking but ensure ads show on all pages.
+  let adsenseLoaded = false;
+  function loadAdSense() {
+    if (adsenseLoaded) return;
+    adsenseLoaded = true;
+    const script = document.createElement('script');
+    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7137088600747138';
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+    document.head.appendChild(script);
+  }
+
+  // Load AdSense early on interaction, or fallback to timer
+  ['scroll', 'mousemove', 'touchstart', 'click'].forEach(evt => 
+    window.addEventListener(evt, loadAdSense, { once: true, passive: true })
+  );
+  // Fallback: If no interaction within 3 seconds, load it anyway so impressions aren't lost
+  setTimeout(loadAdSense, 3000);
+
 });

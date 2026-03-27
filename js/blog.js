@@ -32,6 +32,12 @@
 
   async function loadBlogPosts() {
     try {
+      if (window.BLOG_LIST_STATIC && window.BLOG_LIST_DATA) {
+        allPosts = window.BLOG_LIST_DATA;
+        populateTags();
+        // UI is pre-rendered in HTML, but we populate allPosts so search/filter works!
+        return;
+      }
       const snap = await db.collection('blogs').orderBy('createdAt', 'desc').get();
       allPosts = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p.published === true || p.published === 'true');
       populateTags();
@@ -115,11 +121,24 @@
   async function loadSinglePost() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
+    
+    if (window.BLOG_STATIC && window.BLOG_DATA) {
+      renderSinglePostUI({ id: id || 'static', ...window.BLOG_DATA });
+      return;
+    }
+    
     if (!id) { postContent.innerHTML = '<p>Post not found.</p>'; return; }
     try {
       const doc = await db.collection('blogs').doc(id).get();
       if (!doc.exists) { postContent.innerHTML = '<p>Post not found.</p>'; return; }
-      const p = { id: doc.id, ...doc.data() };
+      renderSinglePostUI({ id: doc.id, ...doc.data() });
+    } catch (e) {
+      console.error(e);
+      postContent.innerHTML = '<p>Failed to load post.</p>';
+    }
+  }
+  
+  function renderSinglePostUI(p) {
       let dateStr = '';
       let isoDatePublished = '';
       let isoDateModified = '';
@@ -160,10 +179,6 @@
 
       // Ping Google & Bing so they know site has updated content
       pingSearchEngines();
-    } catch (e) {
-      console.error(e);
-      postContent.innerHTML = '<p>Failed to load post.</p>';
-    }
   }
 
   // ─── Inject Article JSON-LD Schema ─────
@@ -211,6 +226,10 @@
   // ─── Recent Blogs (homepage) ────────────
   async function loadRecentBlogs() {
     try {
+      if (window.BLOG_LIST_STATIC) {
+        pingSearchEngines(); // HTML is already there
+        return;
+      }
       const snap = await db.collection('blogs').orderBy('createdAt', 'desc').get();
       const posts = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p.published === true || p.published === 'true').slice(0, 3);
       if (!posts.length) { recentBlogsEl.innerHTML = '<p style="text-align:center;color:var(--text-muted)">No posts yet.</p>'; return; }

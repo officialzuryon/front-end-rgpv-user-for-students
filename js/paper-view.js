@@ -22,45 +22,55 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   try {
-    const db = window.RGPV?.db;
-    if (!db) throw new Error("Firebase DB not initialized");
-    
-    // Fetch individual paper
-    const doc = await db.collection('papers').doc(paperId).get();
-    
-    if (!doc.exists) {
-      showError();
-      return;
+    let p = null;
+    let uniName, branchName, subjectName, titleText;
+
+    if (window.PAPER_STATIC) {
+      // --- STATIC SITE GENERATION MODE (Zero Firebase Reads) ---
+      p = window.PAPER_DATA;
+      titleText = p.title || p.subject || 'Question Paper';
+      
+      // Update Meta Tags dynamically for sharing
+      document.title = `${titleText} (${p.year}) - RGPV Papers`;
+      
+      // Hide loaders
+      if (loadingState) loadingState.style.display = 'none';
+      if (paperContent) paperContent.style.display = 'block';
+    } else {
+      // --- DYNAMIC MODE (Legacy / Fallback) ---
+      const db = window.RGPV?.db;
+      if (!db) throw new Error("Firebase DB not initialized");
+      
+      const doc = await db.collection('papers').doc(paperId).get();
+      if (!doc.exists) {
+        showError();
+        return;
+      }
+      p = { id: doc.id, ...doc.data() };
+      
+      uniName = p.university || '—';
+      branchName = p.branch || '—';
+      subjectName = p.subject || '—';
+      
+      const promises = [];
+      if (p.universityId) promises.push(db.collection('universities').doc(p.universityId).get().then(d => { if(d.exists) uniName = d.data().name; }));
+      if (p.branchId) promises.push(db.collection('branches').doc(p.branchId).get().then(d => { if(d.exists) branchName = d.data().name; }));
+      if (p.subjectId) promises.push(db.collection('subjects').doc(p.subjectId).get().then(d => { if(d.exists) subjectName = d.data().name; }));
+      
+      await Promise.all(promises);
+      
+      titleText = p.title || subjectName || 'Question Paper';
+      document.getElementById('pTitle').textContent = titleText;
+      document.getElementById('pCode').textContent = p.code || 'No Code';
+      document.getElementById('pSem').textContent = `Semester ${p.semester || '—'}`;
+      document.getElementById('pYear').textContent = p.year || '—';
+      document.getElementById('pSubject').textContent = subjectName;
+      document.getElementById('pUni').textContent = uniName;
+      document.getElementById('pBranch').textContent = branchName;
+      
+      const dateStr = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric'}) : '—';
+      document.getElementById('pDate').textContent = dateStr;
     }
-    
-    const p = { id: doc.id, ...doc.data() };
-    
-    // Attempt to fetch University, Branch, Subject names by ID (if they exist)
-    // We do this concurrently to make it fast
-    let uniName = p.university || '—';
-    let branchName = p.branch || '—';
-    let subjectName = p.subject || '—';
-    
-    const promises = [];
-    if (p.universityId) promises.push(db.collection('universities').doc(p.universityId).get().then(d => { if(d.exists) uniName = d.data().name; }));
-    if (p.branchId) promises.push(db.collection('branches').doc(p.branchId).get().then(d => { if(d.exists) branchName = d.data().name; }));
-    if (p.subjectId) promises.push(db.collection('subjects').doc(p.subjectId).get().then(d => { if(d.exists) subjectName = d.data().name; }));
-    
-    await Promise.all(promises);
-    
-    // Populate UI
-    const titleText = p.title || subjectName || 'Question Paper';
-    document.getElementById('pTitle').textContent = titleText;
-    document.getElementById('pCode').textContent = p.code || 'No Code';
-    document.getElementById('pSem').textContent = `Semester ${p.semester || '—'}`;
-    document.getElementById('pYear').textContent = p.year || '—';
-    
-    document.getElementById('pSubject').textContent = subjectName;
-    document.getElementById('pUni').textContent = uniName;
-    document.getElementById('pBranch').textContent = branchName;
-    
-    const dateStr = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric'}) : '—';
-    document.getElementById('pDate').textContent = dateStr;
     
     // Update Meta Tags dynamically so if someone shares this exact URL, social cards unfurl properly
     document.title = `${titleText} (${p.year}) - RGPV Papers`;

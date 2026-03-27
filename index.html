@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7137088600747138" crossorigin="anonymous"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RGPV PYQ — Free Previous Year Question Papers | RGPV Papers 2024-2025</title>
@@ -209,7 +208,7 @@
   <nav class="navbar" id="navbar" role="navigation" aria-label="Main navigation">
     <div class="container nav-inner">
       <a href="index.html" class="nav-logo" aria-label="RGPV Papers Home">
-        <div class="logo-icon" aria-hidden="true">📄</div>
+        <img src="assets/logo-icon.png" alt="RGPV Papers Logo" style="width: 32px; height: 32px; object-fit: contain; border-radius: 4px;" />
         <div class="logo-text"><span>RGPV</span> Papers</div>
       </a>
       <ul class="nav-links" role="list">
@@ -488,10 +487,55 @@
         <p>Tips, strategies, and guides to help you crack your RGPV exams</p>
       </div>
       <div id="recentBlogs" data-animate>
-        <div class="loading-center">
-          <div class="spinner"></div>
-          <span>Loading posts…</span>
+<!-- BLOGS_START -->
+<div class="card-grid grid-3">
+
+    <article class="blog-card" style="display: flex; flex-direction: column;">
+      <div class="blog-card-img" style="padding:0; overflow:hidden; display:flex; align-items:center; justify-content:center;"><div style="font-size:3rem;">📚</div></div>
+      <div class="blog-card-body" style="flex: 1; display: flex; flex-direction: column;">
+        <div class="blog-card-meta">
+          
         </div>
+        <h3 class="blog-card-title">How to Avoid an ATKT in RGPV: A Survival Guide</h3>
+        <p class="blog-card-excerpt"></p>
+        <div class="blog-card-footer" style="margin-top: auto;">
+          <span style="font-size:0.78rem;color:var(--text-muted)">✍️ Ansh Sakalley · 2026-03-15T06:51:45.846Z</span>
+          <a href="blog/5zLug67FOIq5UQ1Bbh4s.html" class="read-more" aria-label="Read more about How to Avoid an ATKT in RGPV: A Survival Guide">Read More →</a>
+        </div>
+      </div>
+    </article>
+    <article class="blog-card" style="display: flex; flex-direction: column;">
+      <div class="blog-card-img" style="padding:0; overflow:hidden; display:flex; align-items:center; justify-content:center;"><div style="font-size:3rem;">📚</div></div>
+      <div class="blog-card-body" style="flex: 1; display: flex; flex-direction: column;">
+        <div class="blog-card-meta">
+          
+        </div>
+        <h3 class="blog-card-title">Why Solving RGPV Previous Year Papers is the Cheat Code to Passing</h3>
+        <p class="blog-card-excerpt"></p>
+        <div class="blog-card-footer" style="margin-top: auto;">
+          <span style="font-size:0.78rem;color:var(--text-muted)">✍️ Mayank Chouhan · 2026-03-15T06:50:20.438Z</span>
+          <a href="blog/7ILtjrghW1wkODxcACrF.html" class="read-more" aria-label="Read more about Why Solving RGPV Previous Year Papers is the Cheat Code to Passing">Read More →</a>
+        </div>
+      </div>
+    </article>
+    <article class="blog-card" style="display: flex; flex-direction: column;">
+      <div class="blog-card-img" style="padding:0; overflow:hidden; display:flex; align-items:center; justify-content:center;"><div style="font-size:3rem;">📚</div></div>
+      <div class="blog-card-body" style="flex: 1; display: flex; flex-direction: column;">
+        <div class="blog-card-meta">
+          
+        </div>
+        <h3 class="blog-card-title">Title: The Ultimate Guide to Scoring 8+ CGPA in RGPV Semester Exams</h3>
+        <p class="blog-card-excerpt"></p>
+        <div class="blog-card-footer" style="margin-top: auto;">
+          <span style="font-size:0.78rem;color:var(--text-muted)">✍️ Shashank Chouhan · 2026-03-15T06:49:21.022Z</span>
+          <a href="blog/uvLuDdiuGcpuKCzJMeEC.html" class="read-more" aria-label="Read more about Title: The Ultimate Guide to Scoring 8+ CGPA in RGPV Semester Exams">Read More →</a>
+        </div>
+      </div>
+    </article>
+</div>
+<!-- BLOGS_END -->
+
+        <!-- Removed Loading State -->
       </div>
       <div style="text-align:center; margin-top:36px;" data-animate>
         <a href="blog.html" class="btn btn-secondary btn-lg">View All Posts →</a>
@@ -516,7 +560,7 @@
       <div class="footer-top">
         <div class="footer-about">
           <div class="footer-logo">
-            <div class="logo-icon" aria-hidden="true">📄</div>
+            <img src="assets/logo-icon.png" alt="RGPV Papers Logo" style="width: 32px; height: 32px; object-fit: contain; border-radius: 4px;" />
             <span style="color:#fff;font-weight:800;font-size:1.05rem;"><span
                 style="color:var(--primary-light)">RGPV</span> Papers</span>
           </div>
@@ -575,19 +619,66 @@
   <!-- Scroll Top -->
   <button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
 
-  <!-- Firebase SDK (Compat) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" defer></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js" defer></script>
-  <script src="js/firebase-config.js" defer></script>
+  <!-- Firebase SDK (Compat) - Lazy Loaded below -->
   <script src="js/main.js" defer></script>
-  <script src="js/papers.js" defer></script>
-  <script src="js/blog.js" defer></script>
+  
+  <style>
+    /* Prevent CLS while dynamic content loads */
+    #featuredPapers, #recentBlogs { min-height: 250px; }
+    .toast-container { z-index: 10000; position: fixed; bottom: 20px; right: 20px; }
+  </style>
+
   <script>
     // Show results section when search is triggered
     const searchBtn = document.getElementById('searchPapersBtn');
     const globalSearchInput = document.getElementById('globalSearch');
     
-    function showSearchResults() {
+    // --- Performance Optimization: Lazy Load Heavy Scripts ---
+    let firebaseLoaded = false;
+
+    // Load Firebase only when needed (search interaction or idle)
+    async function loadFirebaseScripts() {
+      if (firebaseLoaded) return Promise.resolve();
+      firebaseLoaded = true;
+      
+      const loadScript = (src) => new Promise((resolve) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        document.body.appendChild(s);
+      });
+
+      // Show spinner on the search area while Firebase loads
+      const loadingEl = document.getElementById('papersLoading');
+      if (loadingEl) loadingEl.style.display = 'flex';
+
+      await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+      await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js');
+      await loadScript('js/firebase-config.js');
+      await loadScript('js/papers.js');
+      await loadScript('js/blog.js');
+      
+      return Promise.resolve();
+    }
+
+    // Trigger loads on user interaction (scroll, click, type)
+    const initLazyLoads = () => {
+      // Only preload Firebase on desktop, wait for interaction on mobile to save CPU
+      if (window.innerWidth > 768) {
+        setTimeout(loadFirebaseScripts, 2000); 
+      }
+      ['scroll', 'mousemove', 'touchstart', 'keydown'].forEach(e => 
+        window.removeEventListener(e, initLazyLoads)
+      );
+    };
+
+    ['scroll', 'mousemove', 'touchstart', 'keydown'].forEach(e => 
+      window.addEventListener(e, initLazyLoads, { once: true, passive: true })
+    );
+
+    // --------------------------------------------------------
+
+    async function showSearchResults() {
       const val = globalSearchInput.value.trim();
       if (val) {
         document.getElementById('homeSearchResultsWrap').style.display = 'block';
@@ -606,6 +697,22 @@
         if (howItWorks) howItWorks.style.display = 'none';
         if (recentBlogs) recentBlogs.style.display = 'none';
         if (ctaBanner) ctaBanner.style.display = 'none';
+
+        // Load Firebase if it hasn't been loaded yet, then let papers.js handle the search
+        await loadFirebaseScripts();
+        
+        // If papers.js is ready, trigger the internal search
+        if (window.applyFilters) {
+           // We set the globalSearch parameter above, applyFilters will pick it up
+           if (document.getElementById('papersLoading')) {
+             document.getElementById('papersLoading').style.display = 'flex';
+           }
+           setTimeout(() => {
+             // Let Firebase finish its first init
+             const qEvent = new KeyboardEvent('keydown', {'key': 'Enter'});
+             globalSearchInput.dispatchEvent(qEvent);
+           }, 500); 
+        }
       }
     }
 
@@ -616,9 +723,11 @@
       globalSearchInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') showSearchResults();
       });
+      // Pre-load on focus
+      globalSearchInput.addEventListener('focus', loadFirebaseScripts, { once: true });
     }
 
-    // Automatically show results if URL has a search query (e.g. from Google Search Box or direct link)
+    // Automatically show results if URL has a search query
     window.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('q')) {
@@ -628,7 +737,14 @@
         showSearchResults();
       }
     });
+
+    // Fallback load if interaction observers fail
+    window.addEventListener('load', () => setTimeout(initLazyLoads, 3000));
   </script>
+<script>
+        window.BLOG_LIST_STATIC = true;
+        window.BLOG_LIST_DATA = [{"id":"5zLug67FOIq5UQ1Bbh4s","title":"How to Avoid an ATKT in RGPV: A Survival Guide","excerpt":"","author":"Ansh Sakalley","createdAt":"2026-03-15T06:51:45.846Z"},{"id":"7ILtjrghW1wkODxcACrF","title":"Why Solving RGPV Previous Year Papers is the Cheat Code to Passing","excerpt":"","author":"Mayank Chouhan","createdAt":"2026-03-15T06:50:20.438Z"},{"id":"uvLuDdiuGcpuKCzJMeEC","title":"Title: The Ultimate Guide to Scoring 8+ CGPA in RGPV Semester Exams","excerpt":"","author":"Shashank Chouhan","createdAt":"2026-03-15T06:49:21.022Z"}];
+      </script>
 </body>
 
 </html>
