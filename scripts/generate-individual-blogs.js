@@ -73,8 +73,9 @@ for (const p of blogs) {
   const tagsHtml = (p.tags || []).map(t => `<span class="badge badge-purple">${escHtml(t)}</span>`).join('');
   fileHtml = fileHtml.replace(/<div class="post-tags" id="postTags"><\/div>/, `<div class="post-tags" id="postTags">${tagsHtml}</div>`);
 
-  // Kill loading spinner
-  fileHtml = fileHtml.replace(/<div class="loading-center" id="postLoading"[\s\S]*?<\/div>/, '<!-- Loading Removed -->');
+  // Kill loading spinner — use exact string match
+  const loadingHtml = '<div class="loading-center" id="postLoading" role="status"><div class="spinner"></div><span>Loading post…</span></div>';
+  fileHtml = fileHtml.replace(loadingHtml, '');
 
   // Inject Static Script Fallback
   const inj = `<script>window.BLOG_STATIC = true; window.BLOG_DATA = ${JSON.stringify({

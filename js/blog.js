@@ -1,9 +1,19 @@
 // =========================================
-// Blog JS — Fetch & Render from Firestore
+// Blog JS — Native JSON Fetch & Render
 // =========================================
 
 (async function () {
-  const db = window.RGPV.db;
+  // ─── Native JSON Data Fetcher ─────────
+  let STATIC_DATA = null;
+  async function getStaticData() {
+    if (STATIC_DATA) return STATIC_DATA;
+    try {
+      const isSubdir = window.location.pathname.includes('/blog/');
+      const res = await fetch(isSubdir ? '../js/papers-data.json' : 'js/papers-data.json');
+      STATIC_DATA = await res.json();
+      return STATIC_DATA;
+    } catch (e) { console.error('Failed to load JSON:', e); return {}; }
+  }
 
   // ─── Blog Listing Page ──────────────────
   const blogGrid = document.getElementById('blogGrid');
@@ -35,11 +45,13 @@
       if (window.BLOG_LIST_STATIC && window.BLOG_LIST_DATA) {
         allPosts = window.BLOG_LIST_DATA;
         populateTags();
-        // UI is pre-rendered in HTML, but we populate allPosts so search/filter works!
+        // UI is pre-rendered in HTML, hide loading indicators
+        if (blogLoading) blogLoading.style.display = 'none';
+        if (blogEmpty) blogEmpty.style.display = 'none';
         return;
       }
-      const snap = await db.collection('blogs').orderBy('createdAt', 'desc').get();
-      allPosts = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p.published === true || p.published === 'true');
+      const data = await getStaticData();
+      allPosts = (data.blogs || []).filter(p => p.published === true || p.published === 'true');
       populateTags();
       renderPosts(allPosts);
     } catch (e) {
@@ -122,16 +134,17 @@
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
     
-    if (window.BLOG_STATIC && window.BLOG_DATA) {
-      renderSinglePostUI({ id: id || 'static', ...window.BLOG_DATA });
+    if (window.BLOG_STATIC) {
+      // Content is already pre-rendered in HTML, nothing to do
       return;
     }
     
     if (!id) { postContent.innerHTML = '<p>Post not found.</p>'; return; }
     try {
-      const doc = await db.collection('blogs').doc(id).get();
-      if (!doc.exists) { postContent.innerHTML = '<p>Post not found.</p>'; return; }
-      renderSinglePostUI({ id: doc.id, ...doc.data() });
+      const data = await getStaticData();
+      const doc = (data.blogs || []).find(b => b.id === id);
+      if (!doc) { postContent.innerHTML = '<p>Post not found.</p>'; return; }
+      renderSinglePostUI(doc);
     } catch (e) {
       console.error(e);
       postContent.innerHTML = '<p>Failed to load post.</p>';
@@ -230,8 +243,8 @@
         pingSearchEngines(); // HTML is already there
         return;
       }
-      const snap = await db.collection('blogs').orderBy('createdAt', 'desc').get();
-      const posts = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p.published === true || p.published === 'true').slice(0, 3);
+      const data = await getStaticData();
+      const posts = (data.blogs || []).filter(p => p.published === true || p.published === 'true').slice(0, 3);
       if (!posts.length) { recentBlogsEl.innerHTML = '<p style="text-align:center;color:var(--text-muted)">No posts yet.</p>'; return; }
       recentBlogsEl.className = 'card-grid grid-3';
       recentBlogsEl.innerHTML = posts.map(renderBlogCard).join('');

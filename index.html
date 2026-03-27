@@ -603,9 +603,6 @@
             <a href="mailto:customerservice.filezone@gmail.com"
               style="font-size:0.82rem;color:var(--primary-light);">customerservice.filezone@gmail.com</a>
           </div>
-        </div>
-      </div>
-      <div class="footer-bottom">
         <p>© <span id="currentYear"></span> RGPV Papers. All rights reserved.</p>
         <div class="footer-links">
           <a href="privacy-policy.html">Privacy</a>
@@ -616,130 +613,56 @@
     </div>
   </footer>
 
-  <!-- Scroll Top -->
   <button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
 
-  <!-- Firebase SDK (Compat) - Lazy Loaded below -->
   <script src="js/main.js" defer></script>
+  <script src="js/papers.js" defer></script>
   
   <style>
-    /* Prevent CLS while dynamic content loads */
     #featuredPapers, #recentBlogs { min-height: 250px; }
     .toast-container { z-index: 10000; position: fixed; bottom: 20px; right: 20px; }
   </style>
 
   <script>
-    // Show results section when search is triggered
     const searchBtn = document.getElementById('searchPapersBtn');
     const globalSearchInput = document.getElementById('globalSearch');
-    
-    // --- Performance Optimization: Lazy Load Heavy Scripts ---
-    let firebaseLoaded = false;
 
-    // Load Firebase only when needed (search interaction or idle)
-    async function loadFirebaseScripts() {
-      if (firebaseLoaded) return Promise.resolve();
-      firebaseLoaded = true;
-      
-      const loadScript = (src) => new Promise((resolve) => {
-        const s = document.createElement('script');
-        s.src = src;
-        s.onload = resolve;
-        document.body.appendChild(s);
-      });
-
-      // Show spinner on the search area while Firebase loads
-      const loadingEl = document.getElementById('papersLoading');
-      if (loadingEl) loadingEl.style.display = 'flex';
-
-      await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
-      await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js');
-      await loadScript('js/firebase-config.js');
-      await loadScript('js/papers.js');
-      await loadScript('js/blog.js');
-      
-      return Promise.resolve();
-    }
-
-    // Trigger loads on user interaction (scroll, click, type)
-    const initLazyLoads = () => {
-      // Only preload Firebase on desktop, wait for interaction on mobile to save CPU
-      if (window.innerWidth > 768) {
-        setTimeout(loadFirebaseScripts, 2000); 
-      }
-      ['scroll', 'mousemove', 'touchstart', 'keydown'].forEach(e => 
-        window.removeEventListener(e, initLazyLoads)
-      );
-    };
-
-    ['scroll', 'mousemove', 'touchstart', 'keydown'].forEach(e => 
-      window.addEventListener(e, initLazyLoads, { once: true, passive: true })
-    );
-
-    // --------------------------------------------------------
-
-    async function showSearchResults() {
-      const val = globalSearchInput.value.trim();
+    function showSearchResults() {
+      const val = globalSearchInput?.value.trim() || '';
       if (val) {
         document.getElementById('homeSearchResultsWrap').style.display = 'block';
         
-        // Hide other homepage sections to focus on results
-        const otherPlatforms = document.getElementById('otherPlatformsSection');
-        const featuredPapers = document.getElementById('featuredPapersSection');
-        const whyUseUs = document.getElementById('whyUseUsSection');
-        const howItWorks = document.getElementById('howItWorksSection');
-        const recentBlogs = document.getElementById('recentBlogsSection');
-        const ctaBanner = document.getElementById('ctaBannerSection');
-        
-        if (otherPlatforms) otherPlatforms.style.display = 'none';
-        if (featuredPapers) featuredPapers.style.display = 'none';
-        if (whyUseUs) whyUseUs.style.display = 'none';
-        if (howItWorks) howItWorks.style.display = 'none';
-        if (recentBlogs) recentBlogs.style.display = 'none';
-        if (ctaBanner) ctaBanner.style.display = 'none';
+        ['otherPlatformsSection', 'featuredPapersSection', 'whyUseUsSection', 'howItWorksSection', 'recentBlogsSection', 'ctaBannerSection'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
 
-        // Load Firebase if it hasn't been loaded yet, then let papers.js handle the search
-        await loadFirebaseScripts();
-        
-        // If papers.js is ready, trigger the internal search
         if (window.applyFilters) {
-           // We set the globalSearch parameter above, applyFilters will pick it up
            if (document.getElementById('papersLoading')) {
              document.getElementById('papersLoading').style.display = 'flex';
            }
-           setTimeout(() => {
-             // Let Firebase finish its first init
-             const qEvent = new KeyboardEvent('keydown', {'key': 'Enter'});
-             globalSearchInput.dispatchEvent(qEvent);
-           }, 500); 
+           const qEvent = new KeyboardEvent('keydown', {'key': 'Enter'});
+           globalSearchInput.dispatchEvent(qEvent);
+        } else {
+           setTimeout(showSearchResults, 100);
         }
       }
     }
 
-    if (searchBtn) {
-      searchBtn.addEventListener('click', showSearchResults);
-    }
+    if (searchBtn) searchBtn.addEventListener('click', showSearchResults);
     if (globalSearchInput) {
       globalSearchInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') showSearchResults();
       });
-      // Pre-load on focus
-      globalSearchInput.addEventListener('focus', loadFirebaseScripts, { once: true });
     }
 
-    // Automatically show results if URL has a search query
     window.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('q')) {
-        if (globalSearchInput) {
-           globalSearchInput.value = urlParams.get('q');
-        }
+        if (globalSearchInput) globalSearchInput.value = urlParams.get('q');
         showSearchResults();
       }
     });
-
-    // Fallback load if interaction observers fail
-    window.addEventListener('load', () => setTimeout(initLazyLoads, 3000));
   </script>
 <script>
         window.BLOG_LIST_STATIC = true;

@@ -3,7 +3,18 @@
 // =========================================
 
 (async function () {
-  const db = window.RGPV.db;
+  const db = window.RGPV?.db || null;
+
+  // ─── Native JSON Data Fetcher ─────────
+  let STATIC_DATA = null;
+  async function getStaticData() {
+    if (STATIC_DATA) return STATIC_DATA;
+    try {
+      const res = await fetch((window.location.pathname.includes('/papers/') || window.location.pathname.includes('/paper/') || window.location.pathname.includes('/blog/')) ? '../js/papers-data.json' : 'js/papers-data.json');
+      STATIC_DATA = await res.json();
+      return STATIC_DATA;
+    } catch (e) { console.error('Failed to load JSON data:', e); return {}; }
+  }
 
   // ─── Share SVG icon (forward-arrow style) ───
   const SHARE_ICON = `<svg class="share-icon-svg" fill="none" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>`;
@@ -50,8 +61,8 @@
       if (cached) {
         universities = JSON.parse(cached);
       } else {
-        const snap = await db.collection('universities').orderBy('name').get();
-        universities = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const data = await getStaticData();
+        universities = data.universities || [];
         sessionStorage.setItem('pyq_univs', JSON.stringify(universities));
       }
       if (filterUniversity) {
@@ -110,8 +121,8 @@
         if (cached) {
           allBranchesCache = JSON.parse(cached);
         } else {
-          const snap = await db.collection('branches').orderBy('name').get();
-          allBranchesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          const data = await getStaticData();
+          allBranchesCache = data.branches || [];
           sessionStorage.setItem('pyq_branches', JSON.stringify(allBranchesCache));
         }
       }
@@ -172,9 +183,8 @@
       if (cached) {
         docs = JSON.parse(cached);
       } else {
-        // Fetch without orderBy to prevent Missing Index crash
-        const snap = await db.collection('degrees').get();
-        docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const data = await getStaticData();
+        docs = data.degrees || [];
         // Sort locally
         docs.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         sessionStorage.setItem('pyq_degrees', JSON.stringify(docs));
@@ -198,8 +208,8 @@
       if (cached && cacheTime && (now - parseInt(cacheTime) < 15 * 60 * 1000)) { // 15 mins cache
         allPapers = JSON.parse(cached);
       } else {
-        const snap = await db.collection('papers').orderBy('createdAt', 'desc').get();
-        allPapers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const data = await getStaticData();
+        allPapers = data.papers || [];
         try {
           sessionStorage.setItem('pyq_papers', JSON.stringify(allPapers));
           sessionStorage.setItem('pyq_papers_time', now.toString());
@@ -1045,8 +1055,8 @@
   if (featuredContainer) {
     (async () => {
       try {
-        const snap = await db.collection('papers').orderBy('createdAt', 'desc').limit(6).get();
-        const papers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const data = await getStaticData();
+        const papers = (data.papers || []).slice(0, 6);
         if (!papers.length) { featuredContainer.innerHTML = '<p style="text-align:center;color:var(--text-muted)">No papers yet.</p>'; return; }
         featuredContainer.className = 'card-grid grid-3';
         featuredContainer.innerHTML = papers.map(p => {
@@ -1088,17 +1098,13 @@
   if (statsEl) {
     (async () => {
       try {
-        const [uSnap, pSnap, bSnap] = await Promise.all([
-          db.collection('universities').get(),
-          db.collection('papers').get(),
-          db.collection('branches').get()
-        ]);
+        const data = await getStaticData();
         const papersNum = document.querySelector('[data-counter="papers"]');
         const univNum = document.querySelector('[data-counter="universities"]');
         const branchNum = document.querySelector('[data-counter="branches"]');
-        if (papersNum) papersNum.setAttribute('data-counter', pSnap.size);
-        if (univNum) univNum.setAttribute('data-counter', uSnap.size);
-        if (branchNum) branchNum.setAttribute('data-counter', bSnap.size);
+        if (papersNum) papersNum.setAttribute('data-counter', (data.papers || []).length);
+        if (univNum) univNum.setAttribute('data-counter', (data.universities || []).length);
+        if (branchNum) branchNum.setAttribute('data-counter', (data.branches || []).length);
       } catch (e) { console.error(e); }
     })();
   }
