@@ -324,18 +324,18 @@
 
     const fuzzyMatch = (token, searchIndexStr) => {
       const words = searchIndexStr.split(/\s+/);
-      
+
       // If token is very short or purely numbers (like "3" or "2023"), exact full-word match prevents "3" from matching "2023".
       if (token.length <= 2 || /^\d+$/.test(token)) {
         return words.includes(token);
       }
-      
+
       // For longer alphanumeric tokens, allow substring match
       if (searchIndexStr.includes(token)) return true;
-      
+
       // Do not allow fuzzy match if string contains digits (e.g. "3sem" should not match "4sem")
-      if (/\d/.test(token)) return false; 
-      
+      if (/\d/.test(token)) return false;
+
       // Fuzzy match for typos in long words
       for (const word of words) {
         if (word.length >= 4 && Math.abs(word.length - token.length) <= 1) {
@@ -373,7 +373,7 @@
       let searchScore = 0;
       if (queryTokens.length > 0) {
         let tokenMatches = 0;
-        
+
         // Build a massive searchable "index" string for omni-search
         const searchIndex = [
           title, pCode, pSubject, paperBranchName, paperUnivName, pSem, pYear,
@@ -430,7 +430,7 @@
 
     // Apply exact query string to all Advanced Search navigation links
     document.querySelectorAll('.advanced-search-link').forEach(link => {
-       link.href = 'papers.html' + (paramString ? '?' + paramString : '');
+      link.href = 'papers.html' + (paramString ? '?' + paramString : '');
     });
 
     // Only update if we aren't currently viewing a PDF so we don't clobber the #viewer state
