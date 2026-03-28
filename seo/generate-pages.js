@@ -1,34 +1,119 @@
 /**
- * SEO Page Generator — Creates static subject landing pages
+ * SEO Page Generator — Massive Auto-Generator
  * 
  * Run: node seo/generate-pages.js
- * Output: papers/*.html (one page per subject)
- * 
- * These static pages are crawlable by Google/Bing and target
- * specific long-tail keywords like "RGPV data structures paper"
- * or specific codes like "RGPV AL 305"
+ * Output: papers/*.html (443+ Landing Pages)
  */
 
 const fs = require('fs');
 const path = require('path');
 
 const DOMAIN = 'https://rgpvpyq.co.in';
-const subjects = JSON.parse(fs.readFileSync(path.join(__dirname, 'subjects.json'), 'utf-8'));
 const outDir = path.join(__dirname, '..', 'papers');
-
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
+// Load Hand-Authored SEO Configs
+const manualSubjects = JSON.parse(fs.readFileSync(path.join(__dirname, 'subjects.json'), 'utf-8'));
+
+// Load Real Database Dump
+const dataPath = path.join(__dirname, '..', 'js', 'papers-data.json');
+const papersData = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+const allPapers = papersData.papers || [];
+
+// Master list of subjects to generate
+const finalSubjects = [];
+
+function slugify(text) {
+  return text.toString().toLowerCase()
+    .replace(/\s+/g, '-')           // Replace spaces with -
+    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+    .replace(/^-+/, '')             // Trim - from start of text
+    .replace(/-+$/, '');            // Trim - from end of text
+}
+
+// 1. Process manual subjects first
+const existingSlugs = new Set();
+const existingTitles = new Set();
+
+manualSubjects.forEach(s => {
+  existingSlugs.add(s.slug);
+  existingTitles.add(s.title.toLowerCase());
+  finalSubjects.push(s);
+});
+
+// 2. Discover ALL unique subjects from the database and generate metadata for the rest
+const paperSubjectsMap = {}; 
+
+allPapers.forEach(p => {
+  const subjName = (p.title || p.subject || '').trim();
+  if (!subjName) return;
+  
+  const lowerName = subjName.toLowerCase();
+  
+  // If we already hand-authored it, skip auto-gen.
+  // Exception: if manualSubjects title is slightly different but they mean the same thing, 
+  // maybe it creates a duplicate. But for now, strict equivalence.
+  if (existingTitles.has(lowerName)) return;
+
+  if (!paperSubjectsMap[lowerName]) {
+    paperSubjectsMap[lowerName] = {
+      title: subjName,
+      codes: new Set(),
+      branch: p.branch || 'Common',
+      semester: p.semester || 'N/A'
+    };
+  }
+  if (p.code) paperSubjectsMap[lowerName].codes.add(p.code);
+});
+
+Object.values(paperSubjectsMap).forEach(data => {
+  const slug = slugify(data.title);
+  if (existingSlugs.has(slug)) return; // prevent exact slug collision
+  
+  existingSlugs.add(slug);
+  const codesArr = Array.from(data.codes);
+  const primaryCode = codesArr[0] || '';
+  const codeDisplay = codesArr.length ? codesArr.join(', ') : '';
+
+  // Generate Dummy High-Quality SEO Metadata
+  finalSubjects.push({
+    slug: slug,
+    title: data.title,
+    codes: codesArr,
+    semester: data.semester,
+    branch: data.branch,
+    university: 'RGPV',
+    keywords: `RGPV ${data.title} question papers, ${data.title} Pyq, RGPV ${codeDisplay} papers, semester ${data.semester}`,
+    description: `Download free RGPV previous year question papers for ${data.title} (${codeDisplay}). Prepare with high quality PYQ papers for Semester ${data.semester}`,
+    topics: ['Important Question Papers', 'Previous Year Questions (PYQ)', 'University Exams'],
+    faq: [
+      {
+        q: `What is the paper code for ${data.title}?`,
+        a: `The paper code for ${data.title} is generally recognized as ${primaryCode} in RGPV.`
+      },
+      {
+        q: `Are these ${data.title} papers free to download?`,
+        a: `Yes, all ${data.title} question papers on RGPV Papers are completely free to view and use for preparation.`
+      }
+    ]
+  });
+});
+
+console.log(`Found ${manualSubjects.length} manual subjects and ${finalSubjects.length - manualSubjects.length} auto-generated subjects. Total: ${finalSubjects.length}`);
+
+
+// HTML GENERATION
 function generatePage(subject) {
   const { slug, title, codes, semester, branch, keywords, description, topics, faq } = subject;
   const pageUrl = `${DOMAIN}/papers/${slug}`;
-  const primaryCode = codes[0];
-  const allCodesDisplay = codes.filter((c, i, a) => a.indexOf(c) === i).slice(0, 4).join(', ');
+  const primaryCode = codes[0] || '';
+  const allCodesDisplay = codes.length > 0 ? codes.slice(0, 4).join(', ') : 'RGPV';
   const uni = subject.university || 'RGPV';
   const fullTitle = `${uni} ${title} PYQ & Previous Year Papers | ${allCodesDisplay} | Free PDF View`;
 
-  // Build codes array for JavaScript (for Firebase matching)
-  const codesArrayStr = JSON.stringify(codes.map(c => c.toLowerCase().replace(/[\\s-]/g, '')));
-  const codesDisplayStr = JSON.stringify(codes);
+  // Build codes array for JavaScript matching
+  const codesArrayStr = JSON.stringify(codes.map(c => c.toLowerCase().replace(/[\s-]/g, '')));
 
   const faqSchemaItems = faq.map((f, i) => `{
         "@type": "Question",
@@ -39,7 +124,8 @@ function generatePage(subject) {
         }
       }`).join(',\n      ');
 
-  const topicsList = topics.map(t => `<li>${t}</li>`).join('\n              ');
+  const topicsList = topics.map(t => `<span class="topic-chip">${t}</span>`).join('\n        ');
+  const codesList = codes.map(c => `<span class="code-chip">${c}</span>`).join('\n        ');
   const faqHtml = faq.map(f => `
           <details class="faq-item">
             <summary class="faq-question">${f.q} <span>+</span></summary>
@@ -65,9 +151,6 @@ function generatePage(subject) {
   <meta property="og:image" content="${DOMAIN}/assets/og-image.jpg"/>
   <meta property="og:site_name" content="RGPV Papers"/>
   <meta property="og:locale" content="en_IN"/>
-  <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="${fullTitle}"/>
-  <meta name="twitter:description" content="${description}"/>
 
   <!-- Schema.org: CollectionPage + FAQPage -->
   <script type="application/ld+json">
@@ -89,7 +172,7 @@ function generatePage(subject) {
       "alternateName": [${codes.map(c => `"${c}"`).join(', ')}],
       "provider": {
         "@type": "Organization",
-        "name": "RGPV - Rajiv Gandhi Proudyogiki Vishwavidyalaya"
+        "name": "${uni} - Rajiv Gandhi Proudyogiki Vishwavidyalaya"
       }
     }
   }
@@ -105,9 +188,6 @@ function generatePage(subject) {
   </script>
 
   <link rel="icon" type="image/png" sizes="192x192" href="../favicon.png" />
-  <link rel="apple-touch-icon" href="../favicon.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link rel="stylesheet" href="../css/style.css"/>
   <link rel="stylesheet" href="../css/papers.css"/>
   <style>
@@ -143,22 +223,17 @@ function generatePage(subject) {
     </a>
     <ul class="nav-links" role="list">
       <li><a href="../index.html">Home</a></li>
-      <li><a href="../papers.html" class="active">Papers</a></li>
+      <li><a href="../papers.html">Papers</a></li>
+      <li><a href="../subjects.html">Subjects</a></li>
       <li><a href="../blog.html">Blog</a></li>
       <li><a href="../about.html">About</a></li>
       <li><a href="../contact.html">Contact</a></li>
     </ul>
     <div class="nav-actions">
       <a href="../papers.html" class="btn btn-primary btn-sm">🔍 Search Papers</a>
-      <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
-        <span></span><span></span><span></span>
-      </button>
     </div>
   </div>
 </nav>
-<div class="mobile-menu" id="mobileMenu" role="navigation">
-  <a href="../index.html">🏠 Home</a><a href="../papers.html">📄 Papers</a><a href="../blog.html">✍️ Blog</a><a href="../about.html">ℹ️ About</a><a href="../contact.html">📧 Contact</a>
-</div>
 
 <!-- Page Header -->
 <header class="page-header">
@@ -198,17 +273,17 @@ function generatePage(subject) {
           <span>RGPV</span>
         </div>
       </div>
-      <h2 style="margin-top: 20px;">🏷️ Known Paper Codes for ${title}</h2>
+      <h2 style="margin-top: 20px;">🏷️ Known Paper Codes</h2>
       <div class="topic-chips" style="margin-top: 10px;">
-        ${codes.map(c => `<span class="code-chip">${c}</span>`).join('\n        ')}
+        ${codesList || '<span class="code-chip">N/A</span>'}
       </div>
       <h2 style="margin-top: 20px;">📚 Topics Covered</h2>
       <div class="topic-chips">
-        ${topics.map(t => `<span class="topic-chip">${t}</span>`).join('\n        ')}
+        ${topicsList}
       </div>
     </div>
 
-    <!-- Papers from Firebase (dynamic) -->
+    <!-- Static Papers Fetcher -->
     <div class="results-meta">
       <p class="results-count" id="resultsCount" aria-live="polite"></p>
     </div>
@@ -219,15 +294,10 @@ function generatePage(subject) {
     <div id="papersEmpty" class="empty-state" style="display:none;" role="status">
       <div class="empty-icon">📭</div>
       <h3>No Papers Found</h3>
-      <p>No ${title} papers available yet. Check back soon or <a href="../papers.html">browse all papers</a>.</p>
     </div>
     <div id="subjectPapers" class="papers-grid" aria-live="polite"></div>
 
-    <div style="text-align:center; margin-top:28px;">
-      <a href="../papers.html?q=${encodeURIComponent(title)}" class="btn btn-secondary btn-lg">🔍 Search All ${title} Papers →</a>
-    </div>
-
-    <!-- FAQ Section (SEO rich snippet) -->
+    <!-- FAQ Section -->
     <section class="faq-section">
       <h2>❓ Frequently Asked Questions about RGPV ${title}</h2>
       ${faqHtml}
@@ -235,11 +305,9 @@ function generatePage(subject) {
 
     <!-- SEO Content Block -->
     <section class="seo-content">
-      <h2>About ${uni} ${title} PYQ (${allCodesDisplay}) Question Papers</h2>
-      <p>${uni} ${title} is a core subject offered in Semester ${semester} for ${branch} students. This subject is identified by paper codes <strong>${allCodesDisplay}</strong> across different batches and branches.</p>
-      <p>Students searching for <strong>${uni} ${primaryCode} PYQ</strong>, <strong>${uni} ${title} question paper</strong>, <strong>${uni} ${title} previous year paper</strong>, or <strong>${uni} ${title} pyq</strong> will find all available papers on this page. We match papers by paper code (${allCodesDisplay}) as well as by subject name.</p>
-      <p>Practicing PYQ (previous year question papers) is the most effective strategy for ${uni} exam preparation. Our collection of ${title} PYQ papers helps you understand the exam pattern, identify frequently asked topics, and improve your time management skills.</p>
-      <p>All ${uni} PYQ papers on RGPV Papers (rgpvpyq.co.in) are <strong>completely free to view</strong> — no downloads, no sign-ups. Just open and start studying. We update our library regularly with the latest exam papers.</p>
+      <h2>About ${uni} ${title} PYQ Question Papers</h2>
+      <p>${uni} ${title} is a subject typically offered in Semester ${semester} for ${branch} students. This subject revolves around core academic principles for university exams.</p>
+      <p>Practicing PYQ (previous year question papers) is the most effective strategy for ${uni} exam preparation. All ${uni} PYQ papers on RGPV Papers (rgpvpyq.co.in) are <strong>completely free to view</strong> — no downloads, no sign-ups.</p>
     </section>
 
   </div>
@@ -257,108 +325,69 @@ function generatePage(subject) {
         <p>Free previous year question papers for RGPV and MP university students.</p>
       </div>
       <div class="footer-col"><h4>Quick Links</h4><ul>
-        <li><a href="../index.html">Home</a></li><li><a href="../papers.html">Browse Papers</a></li><li><a href="../blog.html">Blog</a></li><li><a href="../about.html">About</a></li><li><a href="../contact.html">Contact</a></li>
-      </ul></div>
-      <div class="footer-col"><h4>Popular Subjects</h4><ul>
-        <li><a href="data-structures">Data Structures</a></li>
-        <li><a href="engineering-mathematics">Engineering Mathematics</a></li>
-        <li><a href="computer-networks">Computer Networks</a></li>
-        <li><a href="dbms">DBMS</a></li>
-        <li><a href="operating-systems">Operating Systems</a></li>
-      </ul></div>
-      <div class="footer-col"><h4>Legal</h4><ul>
-        <li><a href="../privacy-policy.html">Privacy Policy</a></li><li><a href="../contact.html">Contact Us</a></li>
+        <li><a href="../index.html">Home</a></li><li><a href="../papers.html">Browse Papers</a></li><li><a href="../subjects.html">Subjects</a></li>
       </ul></div>
     </div>
-    <div class="footer-bottom"><p>© <span id="currentYear"></span> RGPV Papers. All rights reserved.</p></div>
   </div>
 </footer>
-<button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
 
-<!-- Firebase + Scripts -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" defer></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js" defer></script>
-<script src="../js/firebase-config.js" defer></script>
-<script src="../js/main.js" defer></script>
 <script>
-  // Load papers matching ANY of this subject's codes
-  (function() {
-    const subjectCodes = ${codesDisplayStr};
-    const subjectTitle = '${title}';
-    // Normalized codes for fuzzy matching (no spaces, dashes, lowercase)
+  (async function() {
+    const subjectTitle = '${title.toLowerCase()}';
     const normalizedCodes = ${codesArrayStr};
 
-    function normalize(str) {
-      return String(str).toLowerCase().replace(/[\\s\\-]/g, '');
+    function normalize(str) { return String(str).toLowerCase().replace(/[\\s\\-]/g, ''); }
+    function escHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    try {
+      const res = await fetch('../js/papers-data.json');
+      const data = await res.json();
+      const loadEl = document.getElementById('papersLoading');
+      const emptyEl = document.getElementById('papersEmpty');
+      const countEl = document.getElementById('resultsCount');
+      const grid = document.getElementById('subjectPapers');
+      
+      if (loadEl) loadEl.style.display = 'none';
+
+      const matchedPapers = data.papers.filter(p => {
+        const pCode = normalize(p.code || '');
+        const pTitle = (p.title || '').toLowerCase();
+        const pSubj = (p.subject || '').toLowerCase();
+
+        const codeMatch = normalizedCodes.some(nc => nc && (pCode === nc || pCode.includes(nc) || nc.includes(pCode)));
+        const nameMatch = pTitle.includes(subjectTitle) || pSubj.includes(subjectTitle) || subjectTitle.includes(pTitle) || subjectTitle.includes(pSubj);
+        
+        return codeMatch || nameMatch;
+      });
+
+      if (!matchedPapers.length) {
+        if (emptyEl) emptyEl.style.display = 'flex';
+        return;
+      }
+
+      if (countEl) countEl.innerHTML = 'Showing <strong>' + matchedPapers.length + '</strong> ${title} papers';
+
+      grid.innerHTML = matchedPapers.map(p => \`
+        <article class="paper-card" role="article">
+          <div class="paper-card-top">
+            <div class="paper-card-code">📄 \${p.code || 'N/A'}</div>
+            <h3 class="paper-card-title">\${escHtml(p.title || p.subject || 'Question Paper')}</h3>
+          </div>
+          <div class="paper-card-body">
+            <div class="paper-meta-grid">
+              <div class="paper-meta-item"><label>Branch</label><span>\${escHtml(p.branch || 'General')}</span></div>
+              <div class="paper-meta-item"><label>Year</label><span>\${p.year || '—'}</span></div>
+              <div class="paper-meta-item"><label>Semester</label><span>Sem \${p.semester || '—'}</span></div>
+            </div>
+          </div>
+          <div class="paper-card-footer">
+            <a href="../paper/\${p.id}" class="btn btn-primary btn-sm" style="width:100%;text-align:center;">👁 View Paper</a>
+          </div>
+        </article>\`).join('');
+    } catch(e) {
+      console.error(e);
+      document.getElementById('papersLoading').style.display = 'none';
     }
-    function escHtml(str) {
-      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
-    function init() {
-      if (!window.RGPV || !window.RGPV.db) { setTimeout(init, 200); return; }
-      const db = window.RGPV.db;
-      const container = document.getElementById('subjectPapers');
-      const loading = document.getElementById('papersLoading');
-      const empty = document.getElementById('papersEmpty');
-      const count = document.getElementById('resultsCount');
-
-      // Fetch all papers and match by code OR subject name
-      db.collection('papers')
-        .orderBy('createdAt', 'desc')
-        .get()
-        .then(snap => {
-          const titleLower = subjectTitle.toLowerCase();
-          const papers = snap.docs
-            .filter(d => {
-              const data = d.data();
-              const paperCode = normalize(data.code || '');
-              const paperTitle = (data.title || '').toLowerCase();
-              const paperSubject = (data.subject || '').toLowerCase();
-
-              // Match if paper code matches ANY of our codes
-              const codeMatch = normalizedCodes.some(nc => paperCode === nc || paperCode.includes(nc) || nc.includes(paperCode));
-              // Match if paper title/subject contains our subject name
-              const nameMatch = paperTitle.includes(titleLower) || paperSubject.includes(titleLower);
-
-              return codeMatch || nameMatch;
-            })
-            .map(d => ({id: d.id, ...d.data()}));
-
-          return papers;
-        })
-        .then(papers => {
-          if (loading) loading.style.display = 'none';
-          if (!papers.length) { if (empty) empty.style.display = 'flex'; return; }
-          if (count) count.innerHTML = 'Showing <strong>' + papers.length + '</strong> ' + subjectTitle + ' papers';
-          container.innerHTML = papers.map(p => \`
-            <article class="paper-card" role="article">
-              <div class="paper-card-top">
-                <div class="paper-card-code">📄 \${p.code || 'N/A'}</div>
-                <h3 class="paper-card-title">\${escHtml(p.title || p.subject || 'Question Paper')}</h3>
-              </div>
-              <div class="paper-card-body">
-                <div class="paper-meta-grid">
-                  <div class="paper-meta-item"><label>Branch</label><span>\${escHtml(p.branch || 'General')}</span></div>
-                  <div class="paper-meta-item"><label>Year</label><span>\${p.year || '—'}</span></div>
-                  <div class="paper-meta-item"><label>Semester</label><span>Sem \${p.semester || '—'}</span></div>
-                  <div class="paper-meta-item"><label>Subject</label><span>\${escHtml(p.subject || '—')}</span></div>
-                </div>
-              </div>
-              <div class="paper-card-footer">
-                <span class="badge badge-purple">\${escHtml(p.subject || '—')}</span>
-                <a href="../paper/\${p.id}" class="view-btn">👁 View Paper</a>
-              </div>
-            </article>\`).join('');
-        })
-        .catch(err => {
-          console.error('Load papers:', err);
-          if (loading) loading.style.display = 'none';
-          if (empty) { empty.style.display = 'flex'; empty.querySelector('p').textContent = 'Failed to load papers.'; }
-        });
-    }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-    else init();
   })();
 </script>
 </body>
@@ -367,21 +396,19 @@ function generatePage(subject) {
 
 // Generate all pages
 let sitemapEntries = '';
-subjects.forEach(subject => {
+finalSubjects.forEach(subject => {
   const html = generatePage(subject);
   const filePath = path.join(outDir, subject.slug + '.html');
   fs.writeFileSync(filePath, html, 'utf-8');
-  console.log('Generated: papers/' + subject.slug + '.html (codes: ' + subject.codes.join(', ') + ')');
   sitemapEntries += '\n  <url>\n    <loc>' + DOMAIN + '/papers/' + subject.slug + '</loc>\n    <lastmod>' + new Date().toISOString().split('T')[0] + '</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.85</priority>\n  </url>';
 });
 
 // Update sitemap.xml with new pages
 const sitemapPath = path.join(__dirname, '..', 'sitemap.xml');
 let sitemap = fs.readFileSync(sitemapPath, 'utf-8');
-// Remove previous subject entries if any
 sitemap = sitemap.replace(/\n  <!-- SUBJECT PAGES -->[\s\S]*?<!-- \/SUBJECT PAGES -->/g, '');
-// Insert before closing tag
 sitemap = sitemap.replace('</urlset>', '\n  <!-- SUBJECT PAGES -->' + sitemapEntries + '\n  <!-- /SUBJECT PAGES -->\n\n</urlset>');
 fs.writeFileSync(sitemapPath, sitemap, 'utf-8');
-console.log('\nUpdated sitemap.xml with ' + subjects.length + ' subject page entries');
-console.log('\nDone! Generated ' + subjects.length + ' subject landing pages.');
+
+console.log('\nUpdated sitemap.xml with ' + finalSubjects.length + ' subject page entries');
+console.log('\nDone! Generated ' + finalSubjects.length + ' subject landing pages.');

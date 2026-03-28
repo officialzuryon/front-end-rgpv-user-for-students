@@ -214,6 +214,7 @@
       <ul class="nav-links" role="list">
         <li><a href="index.html">Home</a></li>
         <li><a href="papers.html">Papers</a></li>
+        <li><a href="subjects.html">Subjects</a></li>
         <li><a href="blog.html">Blog</a></li>
         <li><a href="about.html">About</a></li>
         <li><a href="contact.html">Contact</a></li>
@@ -231,6 +232,7 @@
   <div class="mobile-menu" id="mobileMenu" role="navigation" aria-label="Mobile navigation">
     <a href="index.html">🏠 Home</a>
     <a href="papers.html">📄 Papers</a>
+    <a href="subjects.html">📚 Subjects</a>
     <a href="blog.html">✍️ Blog</a>
     <a href="about.html">ℹ️ About</a>
     <a href="contact.html">📧 Contact</a>
@@ -404,7 +406,39 @@
     </div>
   </section>
 
-  <!-- Features -->
+  
+  <!-- Browse by Subject (Internal linking for SEO) -->
+  <section id="browseSubjectsSection" class="section-padding" style="background:#fff;">
+    <div class="container">
+      <div class="section-header" data-animate>
+        <p class="eyebrow">Browse by Subject</p>
+        <h2>Popular <span class="text-gradient">Subjects</span></h2>
+        <p>Explore previous year papers for the most searched RGPV subjects</p>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; max-width: 900px; margin: 0 auto;" data-animate>
+        <a href="papers/data-structures" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">💾</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Data Structures</span></a>
+        <a href="papers/computer-networks" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">🌐</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Computer Networks</span></a>
+        <a href="papers/operating-systems" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">🖥️</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Operating Systems</span></a>
+        <a href="papers/dbms" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">🗃️</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">DBMS</span></a>
+        <a href="papers/engineering-mathematics" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">📐</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Engineering Maths</span></a>
+        <a href="papers/object-oriented-programming" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">☕</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">OOP</span></a>
+        <a href="papers/software-engineering" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">⚙️</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Software Engineering</span></a>
+        <a href="papers/digital-electronics" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">⚡</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Digital Electronics</span></a>
+        <a href="papers/chemistry" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">🧪</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Chemistry</span></a>
+        <a href="papers/physics" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">⚛️</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Physics</span></a>
+        <a href="papers/english" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">📝</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">English</span></a>
+        <a href="papers/machine-learning" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">🤖</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Machine Learning</span></a>
+        <a href="papers/compiler-design" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">🔧</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Compiler Design</span></a>
+        <a href="papers/theory-of-computation" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">🧮</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Theory of Computation</span></a>
+        <a href="papers/cloud-computing" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">☁️</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Cloud Computing</span></a>
+        <a href="papers/artificial-intelligence" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">🧠</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Artificial Intelligence</span></a>
+        <a href="papers/fluid-mechanics" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">💧</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Fluid Mechanics</span></a>
+        <a href="papers/thermodynamics" class="card" style="padding: 16px 20px; text-decoration: none; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.3rem;">🔥</span><span style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Thermodynamics</span></a>
+      </div>
+    </div>
+  </section>
+
+<!-- Features -->
   <section id="whyUseUsSection" class="section-padding">
     <div class="container">
       <div class="section-header" data-animate>
@@ -632,7 +666,7 @@
       if (val) {
         document.getElementById('homeSearchResultsWrap').style.display = 'block';
         
-        ['otherPlatformsSection', 'featuredPapersSection', 'whyUseUsSection', 'howItWorksSection', 'recentBlogsSection', 'ctaBannerSection'].forEach(id => {
+        ['otherPlatformsSection', 'featuredPapersSection', 'browseSubjectsSection', 'whyUseUsSection', 'howItWorksSection', 'recentBlogsSection', 'ctaBannerSection'].forEach(id => {
           const el = document.getElementById(id);
           if (el) el.style.display = 'none';
         });
