@@ -225,6 +225,7 @@ function generatePage(subject) {
       <li><a href="../index.html">Home</a></li>
       <li><a href="../papers.html">Papers</a></li>
       <li><a href="../subjects.html">Subjects</a></li>
+        <li><a href="../syllabus.html">Syllabus</a></li>
       <li><a href="../blog.html">Blog</a></li>
       <li><a href="../about.html">About</a></li>
       <li><a href="../contact.html">Contact</a></li>
@@ -326,6 +327,7 @@ function generatePage(subject) {
       </div>
       <div class="footer-col"><h4>Quick Links</h4><ul>
         <li><a href="../index.html">Home</a></li><li><a href="../papers.html">Browse Papers</a></li><li><a href="../subjects.html">Subjects</a></li>
+        <li><a href="../syllabus.html">Syllabus</a></li>
       </ul></div>
     </div>
   </div>
@@ -400,7 +402,7 @@ finalSubjects.forEach(subject => {
   const html = generatePage(subject);
   const filePath = path.join(outDir, subject.slug + '.html');
   fs.writeFileSync(filePath, html, 'utf-8');
-  sitemapEntries += '\n  <url>\n    <loc>' + DOMAIN + '/papers/' + subject.slug + '</loc>\n    <lastmod>' + new Date().toISOString().split('T')[0] + '</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.85</priority>\n  </url>';
+  sitemapEntries += '\n  <url>\n    <loc>' + DOMAIN + '/papers/' + subject.slug + '</loc>\n    <lastmod>2024-06-01</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.85</priority>\n  </url>';
 });
 
 // Update sitemap.xml with new pages

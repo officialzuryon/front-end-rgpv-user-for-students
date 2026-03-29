@@ -19,7 +19,7 @@
    "url":"https://rgpvpyq.co.in/contact",
    "publisher":{"@type":"Organization","name":"RGPV Papers","email":"customerservice.filezone@gmail.com"}}
   </script>
-  <link rel="icon" href="/favicon.png"/>
+  <link rel="icon" href="favicon.png"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link rel="stylesheet" href="css/style.css"/>
@@ -31,10 +31,10 @@
     .contact-info-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
     .contact-info-card p, .contact-info-card a { font-size: 0.88rem; color: var(--text-secondary); }
     .contact-info-card a:hover { color: var(--primary); }
-    .contact-form-card { background: #fff; border-radius: var(--radius-xl); border: 1px solid var(--border); padding: 36px; box-shadow: var(--shadow-md); }
+    .contact-form-card { background: #fff; border-radius: var(--radius-xl); border: 1px solid var(--border); box-shadow: var(--shadow-md); transition: transform 0.3s ease; }
+    .contact-form-card:hover { transform: translateY(-3px); }
     .submit-btn { width: 100%; padding: 14px; background: var(--gradient-hero); color: #fff; border: none; border-radius: var(--radius-pill); font-size: 1rem; font-weight: 700; cursor: pointer; transition: var(--transition); box-shadow: 0 4px 16px rgba(108,58,224,0.3); }
     .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(108,58,224,0.4); }
-    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
     .faq-item { border-bottom: 1px solid var(--border); padding: 18px 0; }
     .faq-question { font-size: 0.95rem; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; list-style: none; }
     .faq-question::marker { display: none; }
@@ -52,9 +52,13 @@
       <div class="logo-text"><span>RGPV</span> Papers</div>
     </a>
     <ul class="nav-links" role="list">
-      <li><a href="index.html">Home</a></li><li><a href="papers.html">Papers</a></li>
-        <li><a href="subjects.html">Subjects</a></li>
-      <li><a href="blog.html">Blog</a></li><li><a href="about.html">About</a></li><li><a href="contact.html" class="active">Contact</a></li>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="papers.html">Papers</a></li>
+      <li><a href="subjects.html">Subjects</a></li>
+      <li><a href="syllabus.html">Syllabus</a></li>
+      <li><a href="blog.html">Blog</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html" class="active">Contact</a></li>
     </ul>
     <div class="nav-actions">
       <a href="papers.html" class="btn btn-primary btn-sm">🔍 Search Papers</a>
@@ -63,12 +67,16 @@
   </div>
 </nav>
 <div class="mobile-menu" id="mobileMenu" role="navigation">
-  <a href="index.html">🏠 Home</a><a href="papers.html">📄 Papers</a>
-    <a href="subjects.html">📚 Subjects</a><a href="blog.html">✍️ Blog</a><a href="about.html">ℹ️ About</a><a href="contact.html">📧 Contact</a>
+  <a href="index.html">🏠 Home</a>
+  <a href="papers.html">📄 Papers</a>
+  <a href="subjects.html">📚 Subjects</a>
+  <a href="syllabus.html">📑 Syllabus</a>
+  <a href="blog.html">✍️ Blog</a>
+  <a href="about.html">ℹ️ About</a>
+  <a href="contact.html">📧 Contact</a>
 </div>
 
 <header class="page-header">
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7137088600747138" crossorigin="anonymous"></script>
   <div class="container">
     <nav class="breadcrumb" aria-label="Breadcrumb"><a href="index.html">Home</a> <span>›</span> <span>Contact</span></nav>
     <h1>📧 Contact Us</h1>
@@ -127,7 +135,7 @@
         </details>
         <details class="faq-item">
           <summary class="faq-question">How do I request a missing paper? <span>+</span></summary>
-          <p class="faq-answer">Use the contact form on this page or email us directly at customerservice.filezone@gmail.com with details of the paper you need.</p>
+          <p class="faq-answer">Please use the Email Us button on this page to send an email directly to customerservice.filezone@gmail.com with details of the paper you need.</p>
         </details>
         <details class="faq-item">
           <summary class="faq-question">How often are papers updated? <span>+</span></summary>
@@ -135,43 +143,16 @@
         </details>
       </div>
 
-      <!-- Contact Form -->
-      <div class="contact-form-card">
-        <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:6px;">Send Us a Message</h2>
-        <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:28px;">Fill the form below and we'll get back to you as soon as possible.</p>
-        <form id="contactForm" novalidate>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-            <div class="form-group">
-              <label for="cf_name">Full Name *</label>
-              <input type="text" id="cf_name" class="form-control" placeholder="Your name" required autocomplete="name"/>
-            </div>
-            <div class="form-group">
-              <label for="cf_email">Email Address *</label>
-              <input type="email" id="cf_email" class="form-control" placeholder="your@email.com" required autocomplete="email"/>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="cf_subject">Subject *</label>
-            <select id="cf_subject" class="form-control" required>
-              <option value="">Select a subject…</option>
-              <option>Paper Request</option>
-              <option>Broken Link / Wrong Paper</option>
-              <option>General Inquiry</option>
-              <option>Feedback / Suggestion</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="cf_university">University (if paper request)</label>
-            <input type="text" id="cf_university" class="form-control" placeholder="e.g. RGPV Bhopal"/>
-          </div>
-          <div class="form-group">
-            <label for="cf_message">Message *</label>
-            <textarea id="cf_message" class="form-control" rows="5" placeholder="Describe your query in detail…" required></textarea>
-          </div>
-          <button type="submit" class="submit-btn" id="contactSubmit">📨 Send Message</button>
-          <p id="formStatus" style="text-align:center;margin-top:14px;font-size:0.88rem;font-weight:600;display:none;"></p>
-        </form>
+      <!-- Contact Area (Replaced Form) -->
+      <div class="contact-form-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 60px 30px;">
+        <div style="font-size: 3rem; margin-bottom: 20px;">💌</div>
+        <h2 style="font-size:1.6rem;font-weight:800;margin-bottom:16px;">We'd love to hear from you!</h2>
+        <p style="color:var(--text-secondary);font-size:1.05rem;line-height:1.6;max-width:400px;margin-bottom:30px;">
+          For any inquiries, feedback, or paper requests, please email us directly. We actively monitor our inbox and try to respond as quickly as possible!
+        </p>
+        <a href="mailto:customerservice.filezone@gmail.com" class="btn btn-primary btn-lg" style="padding: 16px 32px; font-size: 1.1rem; border-radius: 50px; box-shadow: 0 4px 15px rgba(108, 58, 224, 0.3);">
+          ✉️ Email Us Now
+        </a>
       </div>
 
     </div>
@@ -200,54 +181,6 @@
 </footer>
 <button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
 
-<!-- EmailJS for contact form -->
-<script src="https://cdn.emailjs.com/dist/email.min.js"></script>
 <script src="js/main.js" defer></script>
-<script>
-  // Initialize EmailJS — replace YOUR_PUBLIC_KEY with your EmailJS public key
-  // Sign up free at https://emailjs.com
-  (function() {
-    try { emailjs.init("YOUR_EMAILJS_PUBLIC_KEY"); } catch(e) {}
-  })();
-
-  document.getElementById('contactForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const btn = document.getElementById('contactSubmit');
-    const status = document.getElementById('formStatus');
-    const name = document.getElementById('cf_name').value.trim();
-    const email = document.getElementById('cf_email').value.trim();
-    const subject = document.getElementById('cf_subject').value;
-    const message = document.getElementById('cf_message').value.trim();
-
-    if (!name || !email || !subject || !message) {
-      status.textContent = '❌ Please fill all required fields.';
-      status.style.color = 'var(--error)'; status.style.display = 'block'; return;
-    }
-    btn.disabled = true; btn.textContent = '⏳ Sending…';
-
-    try {
-      // Try EmailJS first
-      await emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
-        from_name: name,
-        from_email: email,
-        subject: subject,
-        university: document.getElementById('cf_university').value || 'N/A',
-        message: message,
-        to_email: "customerservice.filezone@gmail.com"
-      });
-      status.textContent = '✅ Message sent! We\'ll get back to you soon.';
-      status.style.color = 'var(--success)'; status.style.display = 'block';
-      this.reset();
-    } catch (err) {
-      // Fallback: open mailto
-      const mailtoUrl = `mailto:customerservice.filezone@gmail.com?subject=${encodeURIComponent('[RGPV Papers] '+subject)}&body=${encodeURIComponent('Name: '+name+'\nEmail: '+email+'\n\n'+message)}`;
-      window.location.href = mailtoUrl;
-      status.textContent = '📬 Opening your email client as fallback.';
-      status.style.color = 'var(--primary)'; status.style.display = 'block';
-    } finally {
-      btn.disabled = false; btn.textContent = '📨 Send Message';
-    }
-  });
-</script>
 </body>
 </html>

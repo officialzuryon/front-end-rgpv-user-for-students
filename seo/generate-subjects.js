@@ -114,7 +114,8 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-const currentDate = new Date().toISOString().split('T')[0];
+// Frozen to prevent Git diff bloat on every build
+const currentDate = '2024-06-01';
 
 const pageTitle = "Browse All Subjects | RGPV Previous Year Papers";
 const metaDesc = "Directory of all RGPV subjects grouped by degree (B.Tech, MCA, Diploma, etc). Browse thousands of previous year question papers instantly.";
@@ -271,6 +272,7 @@ const html = `<!DOCTYPE html>
         <li><a href="index.html">Home</a></li>
         <li><a href="papers.html">Papers</a></li>
         <li><a href="subjects.html" class="active">Subjects</a></li>
+        <li><a href="syllabus.html">Syllabus</a></li>
         <li><a href="blog.html">Blog</a></li>
         <li><a href="about.html">About</a></li>
         <li><a href="contact.html">Contact</a></li>
@@ -288,6 +290,7 @@ const html = `<!DOCTYPE html>
     <a href="index.html">🏠 Home</a>
     <a href="papers.html">📄 Papers</a>
     <a href="subjects.html" class="active">📚 Subjects</a>
+    <a href="syllabus.html">📑 Syllabus</a>
     <a href="blog.html">✍️ Blog</a>
     <a href="about.html">ℹ️ About</a>
     <a href="contact.html">📧 Contact</a>
@@ -337,6 +340,7 @@ const html = `<!DOCTYPE html>
             <li><a href="index.html">Home</a></li>
             <li><a href="papers.html">Browse Papers</a></li>
             <li><a href="subjects.html">Subjects</a></li>
+            <li><a href="syllabus.html">Syllabus</a></li>
             <li><a href="blog.html">Blog</a></li>
             <li><a href="contact.html">Contact</a></li>
           </ul>

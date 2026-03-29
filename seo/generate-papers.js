@@ -55,7 +55,7 @@ function escapeJsonString(str) {
     .replace(/\r/g, '\\r');
 }
 
-function generatePaperHtml(p) {
+function generatePaperHtml(p, siblings = []) {
   const code = p.code || '';
   const title = p.title || p.subject || 'Question Paper';
   const year = p.year || '';
@@ -190,6 +190,7 @@ function generatePaperHtml(p) {
         <li><a href="../index.html">Home</a></li>
         <li><a href="../papers.html" class="active">Papers</a></li>
         <li><a href="../subjects.html">Subjects</a></li>
+        <li><a href="../syllabus.html">Syllabus</a></li>
         <li><a href="../blog.html">Blog</a></li>
         <li><a href="../about.html">About</a></li>
         <li><a href="../contact.html">Contact</a></li>
@@ -207,6 +208,7 @@ function generatePaperHtml(p) {
     <a href="../index.html">🏠 Home</a>
     <a href="../papers.html">📄 Papers</a>
     <a href="../subjects.html">📚 Subjects</a>
+    <a href="../syllabus.html">📑 Syllabus</a>
     <a href="../blog.html">✍️ Blog</a>
     <a href="../about.html">ℹ️ About</a>
     <a href="../contact.html">📧 Contact</a>
@@ -303,6 +305,15 @@ function generatePaperHtml(p) {
             <span class="badge badge-teal" id="pSem">Semester ${semester}</span>
             <span class="badge badge-orange" id="pYear">${year}</span>
           </div>
+
+          ${siblings.length > 1 ? `
+          <div style="margin-top: 16px;">
+            <label for="yearSelector" style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-right: 8px;">Switch Year:</label>
+            <select id="yearSelector" onchange="if(this.value) window.location.href='../paper/' + this.value;" style="padding: 6px 12px; border-radius: 4px; border: 1px solid var(--border); font-size: 0.9rem; font-weight: 600; cursor: pointer; min-width: 120px; background: #fff;">
+              ${siblings.map(s => `<option value="${s.id}" ${s.id === p.id ? 'selected' : ''}>${s.year || 'Unknown'}</option>`).join('')}
+            </select>
+          </div>
+          ` : ''}
 
           <div class="paper-details-grid">
             <div class="detail-item">
@@ -471,26 +482,44 @@ async function generateAllPapers() {
     papers.push({ id: doc.id, ...doc.data() });
   });
 
-  console.log(`Found ${papers.length} papers. Generating static HTML pages with improved SEO...`);
+  const paperGroups = {};
+  papers.forEach(p => {
+    const key = ((p.code || '') + '-' + (p.title || p.subject || '')).toLowerCase().trim();
+    if (!paperGroups[key]) paperGroups[key] = [];
+    paperGroups[key].push(p);
+  });
+
+  const prunedPapers = [];
+  Object.values(paperGroups).forEach(group => {
+    group.sort((a, b) => {
+      const yearDiff = (parseInt(b.year) || 0) - (parseInt(a.year) || 0);
+      if (yearDiff !== 0) return yearDiff;
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    });
+    const top4 = group.slice(0, 4);
+    top4.forEach(p => prunedPapers.push({ ...p, _siblings: top4 }));
+  });
+
+  console.log(`Found ${papers.length} papers. Pruned to ${prunedPapers.length} (max 4 per subject).`);
 
   let sitemapEntries = '';
   let generated = 0;
 
-  papers.forEach(p => {
-    const html = generatePaperHtml(p);
+  prunedPapers.forEach(p => {
+    const html = generatePaperHtml(p, p._siblings);
     const filePath = path.join(outDir, `${p.id}.html`);
     fs.writeFileSync(filePath, html, 'utf-8');
     generated++;
 
     if (generated % 100 === 0) {
-      console.log(`  Generated ${generated}/${papers.length} pages...`);
+      console.log(`  Generated ${generated}/${prunedPapers.length} pages...`);
     }
 
     // Build sitemap entry
     const canonicalUrl = `${DOMAIN}/paper/${p.id}`;
     const lastMod = p.createdAt ? 
-      (p.createdAt._seconds ? new Date(p.createdAt._seconds * 1000).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]) 
-      : new Date().toISOString().split('T')[0];
+      (p.createdAt._seconds ? new Date(p.createdAt._seconds * 1000).toISOString().split('T')[0] : '2024-06-01') 
+      : '2024-06-01';
     sitemapEntries += `\n  <url>\n    <loc>${canonicalUrl}</loc>\n    <lastmod>${lastMod}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.65</priority>\n  </url>`;
   });
 

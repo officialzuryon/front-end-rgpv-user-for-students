@@ -81,14 +81,32 @@ async function generateStaticData() {
       fetchCollection('blogs')
     ]);
 
-    // 2. Process data
+    // 2. Process data: Enforce max 4 most recent papers per subject
+    const paperGroups = {};
+    papers.forEach(p => {
+      const key = ((p.code || '') + '-' + (p.title || p.subject || '')).toLowerCase().trim();
+      if (!paperGroups[key]) paperGroups[key] = [];
+      paperGroups[key].push(p);
+    });
+
+    const prunedPapers = [];
+    Object.values(paperGroups).forEach(group => {
+      group.sort((a, b) => {
+        const yearDiff = (parseInt(b.year) || 0) - (parseInt(a.year) || 0);
+        if (yearDiff !== 0) return yearDiff;
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      });
+      prunedPapers.push(...group.slice(0, 4));
+    });
+
+    prunedPapers.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
     const data = {
-      papers: papers.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)),
+      papers: prunedPapers,
       blogs: blogs.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)),
       branches,
       universities,
-      degrees,
-      generatedAt: new Date().toISOString()
+      degrees
     };
 
     // 3. Save to data/papers.json

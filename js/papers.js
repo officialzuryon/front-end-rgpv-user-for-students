@@ -2,6 +2,12 @@
 // Papers JS — Fetch, Filter, Sort, Viewer
 // =========================================
 
+window.getPaperUrl = function(pid) {
+  const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' || window.location.protocol === 'file:';
+  const prefix = isLocal && window.location.pathname.includes('/front/') ? '/front' : '';
+  return isLocal ? `${prefix}/paper/${pid}.html` : `/paper/${pid}`;
+};
+
 (async function () {
   const db = window.RGPV?.db || null;
 
@@ -545,10 +551,10 @@
       <div class="paper-card-footer">
         <span class="badge badge-purple">${escHtml(p.subject || '—')}</span>
         <div style="display: flex; gap: 8px; align-items: center;">
-          <button onclick="sharePaper('${escHtml(p.title || p.subject || 'Paper')}', '/paper/${p.id}')" class="btn-share" aria-label="Share paper">
+          <button onclick="sharePaper('${escHtml(p.title || p.subject || 'Paper')}', window.getPaperUrl('${p.id}'))" class="btn-share" aria-label="Share paper">
             ${SHARE_ICON}<span class="share-label">Share</span>
           </button>
-          <a href="/paper/${p.id}" class="btn btn-primary" target="_blank" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
+          <a href="${window.getPaperUrl(p.id)}" class="btn btn-primary" target="_blank" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
             👁 View
           </a>
         </div>
@@ -1079,10 +1085,10 @@
             <div class="paper-card-footer">
               <span class="badge badge-purple">${escHtml(p.subject || '—')}</span>
               <div style="display: flex; gap: 8px; align-items: center;">
-                <button onclick="sharePaper('${escHtml(p.title || p.subject || 'Paper')}', '/paper/${p.id}')" class="btn-share" aria-label="Share paper">
+                <button onclick="sharePaper('${escHtml(p.title || p.subject || 'Paper')}', window.getPaperUrl('${p.id}'))" class="btn-share" aria-label="Share paper">
                   ${SHARE_ICON}<span class="share-label">Share</span>
                 </button>
-                <a href="/paper/${p.id}" class="btn btn-primary" target="_blank" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
+                <a href="${window.getPaperUrl(p.id)}" class="btn btn-primary" target="_blank" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
                   👁 View
                 </a>
               </div>
