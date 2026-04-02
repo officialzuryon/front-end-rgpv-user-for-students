@@ -1038,7 +1038,7 @@ window.getPaperUrl = function(pid) {
   function populateYears() {
     if (!filterYear) return;
     const current = new Date().getFullYear();
-    for (let y = current; y >= 2010; y--) {
+    for (let y = current; y >= current - 4; y--) {
       const opt = document.createElement('option');
       opt.value = y; opt.textContent = y;
       filterYear.appendChild(opt);
