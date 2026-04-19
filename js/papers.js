@@ -223,11 +223,15 @@ window.getPaperUrl = function(pid) {
   async function loadPapers() {
     showLoading(true);
     try {
-      const cached = sessionStorage.getItem('pyq_papers');
-      const cacheTime = sessionStorage.getItem('pyq_papers_time');
+      // Force clear legacy cache schema
+      sessionStorage.removeItem('pyq_papers');
+      sessionStorage.removeItem('pyq_papers_time');
+      
+      const cached = null;
+      const cacheTime = null;
       const now = Date.now();
-      // Temporarily bypass 15 min cache for testing new HTML files
-      if (cached && cacheTime && false) { // 15 mins cache
+      // Bypass cache permanently for now since we rely on getStaticData
+      if (false) {
         allPapers = JSON.parse(cached);
       } else {
         const data = await getStaticData();
@@ -538,12 +542,14 @@ window.getPaperUrl = function(pid) {
   }
 
   function renderPaperCard(p) {
-    const codeLabel    = escHtml(p.displayCode || p.subjectCode || 'N/A');
-    const subjectLabel = escHtml(p.subjectName  || 'Question Paper');
-    const courseLabel  = escHtml(p.courseType   || '-');
-    const branchLabel  = escHtml(p.branch       || '-');
+    const codeLabel    = escHtml(p.displayCode || p.subjectCode || p.code || 'N/A');
+    const subjectLabel = escHtml(p.subjectName  || p.title || 'Question Paper');
+    const courseLabel  = escHtml(p.courseType   || p.examType || '-');
+    const branchLabel  = escHtml(p.branch       || p.branchId || '-');
     const examLabel    = `${p.month ? escHtml(p.month) + ' ' : ''}${p.year || '-'}`;
-    const paperUrl = window.getPaperUrl(p.paperId || p.id);
+    
+    // Always prefer the liveUrl if it exists since it's exactly where the file is.
+    const paperUrl = p.liveUrl ? p.liveUrl : window.getPaperUrl(p.paperId || p.id);
     return `
     <article class="paper-card" role="article">
       <div class="paper-card-top">
