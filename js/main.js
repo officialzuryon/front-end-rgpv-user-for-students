@@ -198,3 +198,43 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(loadAdSense, 3000);
 
 });
+
+// Container-only print function (allows printing the paper cleanly without CSS media queries)
+window.printPaperContainer = function() {
+    const container = document.querySelector('.exam-container');
+    if (!container) {
+        window.print();
+        return;
+    }
+
+    let styles = '';
+    document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+        styles += '<link rel="stylesheet" href="' + link.href + '">\n';
+    });
+
+    const printContents = container.outerHTML;
+
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0px';
+    iframe.style.height = '0px';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write('<html><head><title>Print Paper</title>');
+    doc.write(styles);
+    doc.write('<style>body { background: #fff !important; color: #000 !important; margin: 0; padding: 20px; font-family: "Times New Roman", Times, serif; } .exam-container { box-shadow: none !important; border: none !important; max-width: 100% !important; padding: 0 !important; margin: 0 !important; width: 100% !important; } .btn-print-pdf { display: none !important; }</style>');
+    doc.write('</head><body>');
+    doc.write(printContents);
+    doc.write('<div style="text-align:center; margin-top:40px; padding-top:20px; border-top: 1px solid #ccc; color: #555; font-size: 12pt; font-family: Arial, sans-serif;">rgpvpyq.co.in — Free RGPV Question Papers</div>');
+    doc.write('</body></html>');
+    doc.close();
+
+    setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(() => document.body.removeChild(iframe), 2000);
+    }, 500);
+};

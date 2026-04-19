@@ -1,17 +1,32 @@
 // =========================================
-// Papers JS — Fetch, Filter, Sort, Viewer
+// Papers JS "” Fetch, Filter, Sort, Directory
 // =========================================
 
 window.getPaperUrl = function(pid) {
-  const isLocal = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' || window.location.protocol === 'file:';
-  const prefix = isLocal && window.location.pathname.includes('/front/') ? '/front' : '';
-  return isLocal ? `${prefix}/paper/${pid}.html` : `/paper/${pid}`;
+  const isFileProtocol = window.location.protocol === 'file:';
+  
+  if (isFileProtocol) {
+      // Create a strict absolute path locally to bypass all Windows relative folder resolution bugs
+      const currentPath = window.location.pathname;
+      const frontIdx = currentPath.indexOf('/front/');
+      if (frontIdx !== -1) {
+          const basePath = currentPath.substring(0, frontIdx + '/front/'.length);
+          return `${basePath}paper/${pid}.html`;
+      } else {
+          return `paper/${pid}.html`;
+      }
+  } else {
+      // Universal routing for Live Servers and Production.
+      const isWorkspaceRoot = window.location.pathname.includes('/front/');
+      const basePath = isWorkspaceRoot ? '/front/' : '/';
+      return `${basePath}paper/${pid}`;
+  }
 };
 
 (async function () {
   const db = window.RGPV?.db || null;
 
-  // ─── Native JSON Data Fetcher ─────────
+  // â”€â”€â”€ Native JSON Data Fetcher â”€â”€â”€â”€â”€â”€â”€â”€â”€
   let STATIC_DATA = null;
   async function getStaticData() {
     if (STATIC_DATA) return STATIC_DATA;
@@ -22,10 +37,10 @@ window.getPaperUrl = function(pid) {
     } catch (e) { console.error('Failed to load JSON data:', e); return {}; }
   }
 
-  // ─── Share SVG icon (forward-arrow style) ───
+  // â”€â”€â”€ Share SVG icon (forward-arrow style) â”€â”€â”€
   const SHARE_ICON = `<svg class="share-icon-svg" fill="none" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>`;
 
-  // ─── State ─────────────────────────────
+  // â”€â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   let allPapers = [];
   let filteredPapers = [];
   let universities = [];
@@ -38,7 +53,7 @@ window.getPaperUrl = function(pid) {
   let activeFilters = {};
   let viewMode = 'grid'; // grid | list
 
-  // ─── DOM Refs ───────────────────────────
+  // â”€â”€â”€ DOM Refs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const papersContainer = document.getElementById('papersContainer');
   const resultsCount = document.getElementById('resultsCount');
   const paginationEl = document.getElementById('pagination');
@@ -60,7 +75,7 @@ window.getPaperUrl = function(pid) {
   const viewerTitle = document.getElementById('viewerTitle');
   const viewerFrame = document.getElementById('viewerFrame');
 
-  // ─── Load Universities ──────────────────
+  // â”€â”€â”€ Load Universities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async function loadUniversities() {
     try {
       const cached = sessionStorage.getItem('pyq_univs');
@@ -81,7 +96,7 @@ window.getPaperUrl = function(pid) {
     } catch (e) { console.error('loadUniversities:', e); }
   }
 
-  // ─── Degree → Course Mapping ──────────────
+  // â”€â”€â”€ Degree â†’ Course Mapping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Maps each degree to the course/branch names it covers.
   // Branch names that match any of these (case-insensitive, partial match) will show.
   const DEGREE_COURSES = {
@@ -116,7 +131,7 @@ window.getPaperUrl = function(pid) {
     ]
   };
 
-  // ─── Load Branches (filtered by degree ONLY) ──
+  // â”€â”€â”€ Load Branches (filtered by degree ONLY) â”€â”€
   let allBranchesCache = null; // cache all branches for faster filtering
 
   async function loadBranches(universityId = null, degreeValue = null) {
@@ -180,7 +195,7 @@ window.getPaperUrl = function(pid) {
     } catch (e) { console.error('loadBranches:', e); }
   }
 
-  // ─── Load Degrees ────────────────────────
+  // â”€â”€â”€ Load Degrees â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async function loadDegrees() {
     if (!filterDegree) return;
     try {
@@ -204,14 +219,15 @@ window.getPaperUrl = function(pid) {
     } catch (e) { console.error('loadDegrees:', e); }
   }
 
-  // ─── Load Papers ────────────────────────
+  // â”€â”€â”€ Load Papers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async function loadPapers() {
     showLoading(true);
     try {
       const cached = sessionStorage.getItem('pyq_papers');
       const cacheTime = sessionStorage.getItem('pyq_papers_time');
       const now = Date.now();
-      if (cached && cacheTime && (now - parseInt(cacheTime) < 15 * 60 * 1000)) { // 15 mins cache
+      // Temporarily bypass 15 min cache for testing new HTML files
+      if (cached && cacheTime && false) { // 15 mins cache
         allPapers = JSON.parse(cached);
       } else {
         const data = await getStaticData();
@@ -224,7 +240,7 @@ window.getPaperUrl = function(pid) {
 
       isDataLoaded = true;
 
-      // ─── Read Filters from URL ────────────────
+      // â”€â”€â”€ Read Filters from URL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       const urlParams = new URLSearchParams(window.location.search);
       let hasUrlFilters = false;
 
@@ -292,7 +308,7 @@ window.getPaperUrl = function(pid) {
     }
   }
 
-  // ─── Filter & Sort ──────────────────────
+  // â”€â”€â”€ Filter & Sort â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   let activeSearchQuery = '';
 
   function applyFilters() {
@@ -311,9 +327,7 @@ window.getPaperUrl = function(pid) {
 
     activeFilters = {};
     if (activeSearchQuery) activeFilters.search = `"${activeSearchQuery}"`;
-    if (uId) { const u = universities.find(x => x.id === uId); activeFilters.university = u?.name || uId; }
     if (bId) { const b = branches.find(x => x.id === bId); activeFilters.branch = b?.name || bId; }
-    if (sem) activeFilters.semester = `Sem ${sem}`;
     if (yr) activeFilters.year = yr;
     if (code) activeFilters.code = code.toUpperCase();
     if (subj) activeFilters.subject = subj;
@@ -364,72 +378,77 @@ window.getPaperUrl = function(pid) {
     const queryTokens = activeSearchQuery ? activeSearchQuery.replace(/[,+.]/g, ' ').split(/\s+/).filter(Boolean) : [];
 
     filteredPapers = allPapers.map(p => {
-      const title = (p.title || '').toLowerCase();
-      const pCode = (p.code || '').toLowerCase();
-      const pSubject = (p.subject || '').toLowerCase();
-      const pBranch = (p.branchId || p.branch || '');
-      const pUniv = (p.universityId || '');
-      const pSem = String(p.semester || '');
-      const pYear = String(p.year || '');
+      // â”€â”€ New schema field extraction â”€â”€
+      const pCode      = (p.subjectCode  || '').toLowerCase();
+      const pSubject   = (p.subjectName  || '').toLowerCase();
+      const pBranch    = (p.branch       || '').toLowerCase();
+      const pCourseType = (p.courseType  || '').toLowerCase();
+      const pYear      = String(p.year   || '');
+      const pMonth     = (p.month        || '').toLowerCase();
+      const pDisplayCode = (p.displayCode || '').toLowerCase();
 
-      const matchU = !uId || pUniv === uId;
-
-      // Match by branch Name instead of ID, since branches are global per degree
-      let paperBranchName = (branches.find(b => b.id === pBranch)?.name || p.branch || '').toLowerCase().trim();
-      let selectedBranchName = (branches.find(b => b.id === bId)?.name || '').toLowerCase().trim();
-      let paperUnivName = (universities.find(u => u.id === pUniv)?.name || pUniv || '').toLowerCase().trim();
-      const matchB = !bId || (paperBranchName === selectedBranchName);
-      const matchS = !sem || pSem === sem;
-      const matchY = !yr || pYear === yr;
-      const matchC = !code || pCode.includes(code);
+      // Branch filter: compare selected option text against the paper's branch string
+      const selectedBranchText = (filterBranch?.options[filterBranch?.selectedIndex]?.textContent || '').toLowerCase().trim();
+      const matchB   = !bId  || pBranch === selectedBranchText;
+      const matchY   = !yr   || pYear === yr;
+      const matchC   = !code || pCode.includes(code);
       const matchSub = !subj || pSubject.includes(subj);
-      const matchDeg = !deg || (p.degree || '').toLowerCase().includes(deg);
+      const matchDeg = !deg  || pCourseType.includes(deg);
+      // University and semester are not present in the new schema "” always pass
+      const matchU = true;
+      const matchS = true;
 
       // Relevance Scoring for fuzzy search
       let searchScore = 0;
       if (queryTokens.length > 0) {
         let tokenMatches = 0;
 
-        // Build a massive searchable "index" string for omni-search
-        const searchIndex = [
-          title, pCode, pSubject, paperBranchName, paperUnivName, pSem, pYear,
-          (p.degree || '').toLowerCase(),
-          `sem ${pSem}`, `semester ${pSem}`, `${pSem}sem`, `sem${pSem}`,
-          `${pSem}semester`, `semester${pSem}`,
-          `${pSem}st`, `${pSem}nd`, `${pSem}rd`, `${pSem}th`,
-          `year ${pYear}`, `${pYear}year`, `year${pYear}`
-        ].join(' ');
+        // Extract individual branches if comma-separated (e.g. "AI,AL") to support queries like "AL-305"
+        const branchesList = (p.branch || '').split(',').map(b => b.trim()).filter(Boolean);
+        const expandedCodes = branchesList.map(b => `${b}-${pCode}`);
 
-        queryTokens.forEach(token => {
+        // Build a searchable index string using all new schema fields + permutation codes
+        const searchIndex = [
+          ...expandedCodes,
+          pCode, pSubject, pBranch, pCourseType, pYear, pMonth, pDisplayCode,
+          `year ${pYear}`, `${pYear}year`, `year${pYear}`
+        ].join(' ').toLowerCase();
+
+        queryTokens.forEach(tok => {
+          const token = tok.toLowerCase();
           let matched = false;
-          // Avoid matching single digits like "3" against substrings like "CS-403" or "2023"
+          // Avoid matching short digits against substrings like "CS-403" or "2024"
           const isShortNum = token.length <= 2 && /^\d+$/.test(token);
 
-          // Exact matches in primary fields are worth the most
-          if (pCode === token) { searchScore += 10; matched = true; }
-          else if (!isShortNum && pCode.includes(token)) { searchScore += 5; matched = true; }
-          else if (pSubject === token) { searchScore += 8; matched = true; }
-          else if (!isShortNum && pSubject.includes(token)) { searchScore += 4; matched = true; }
-          else if (title === token) { searchScore += 6; matched = true; }
-          else if (!isShortNum && title.includes(token)) { searchScore += 3; matched = true; }
-          // Fallback to omni-search for branches, years, semesters, universities (with typo tolerance!)
-          else if (fuzzyMatch(token, searchIndex)) { searchScore += 1; matched = true; }
+          const exactCodeMatch = expandedCodes.some(c => c.toLowerCase() === token);
+          const partialCodeMatch = expandedCodes.some(c => c.toLowerCase().includes(token));
+
+          // Scores by field priority: subjectCode > subjectName > courseType > omni fallback
+          if (pCode.toLowerCase() === token)                { searchScore += 10; matched = true; }
+          else if (pDisplayCode.toLowerCase() === token || exactCodeMatch) { searchScore += 10; matched = true; }
+          else if (!isShortNum && pCode.toLowerCase().includes(token))   { searchScore += 5;  matched = true; }
+          else if (!isShortNum && (pDisplayCode.toLowerCase().includes(token) || partialCodeMatch)) { searchScore += 5; matched = true; }
+          else if (pSubject.toLowerCase() === token)        { searchScore += 8;  matched = true; }
+          else if (!isShortNum && pSubject.toLowerCase().includes(token)) { searchScore += 4;  matched = true; }
+          else if (!isShortNum && pCourseType.toLowerCase().includes(token)) { searchScore += 3; matched = true; }
+          // Fallback to omni-search (branch, year, month) with typo tolerance
+          else if (fuzzyMatch(token, searchIndex))          { searchScore += 1;  matched = true; }
 
           if (matched) tokenMatches++;
         });
 
-        // If a query exists, it MUST match all tokens for highly relevant results (AND logic)
+        // AND logic: all tokens must match
         if (tokenMatches !== queryTokens.length) return null;
       }
 
-      // If it passes dropdown filters
+      // If it passes all dropdown filters
       if (matchU && matchB && matchS && matchY && matchC && matchSub && matchDeg) {
-        return { ...p, searchScore }; // Attach calculated score for sorting
+        return { ...p, searchScore };
       }
       return null;
     }).filter(Boolean); // Drop nulls
 
-    // ─── Update URL to allow sharing filters ───────────────
+    // â”€â”€â”€ Update URL to allow sharing filters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const urlParams = new URLSearchParams();
     if (uId) urlParams.set('university', uId);
     if (bId) urlParams.set('branch', bId);
@@ -449,10 +468,7 @@ window.getPaperUrl = function(pid) {
       link.href = 'papers.html' + (paramString ? '?' + paramString : '');
     });
 
-    // Only update if we aren't currently viewing a PDF so we don't clobber the #viewer state
-    if (window.location.hash !== '#viewer') {
-      window.history.replaceState({}, '', newUrl);
-    }
+    window.history.replaceState({}, '', newUrl);
 
     sortPapers();
     renderActiveFilters();
@@ -471,10 +487,10 @@ window.getPaperUrl = function(pid) {
 
   function sortPapers() {
     const fieldMap = {
-      title: p => (p.title || '').toLowerCase(),
-      branch: p => (branches.find(b => b.id === (p.branchId || p.branch))?.name || p.branch || '').toLowerCase(),
-      code: p => (p.code || '').toLowerCase(),
-      year: p => parseInt(p.year) || 0,
+      title:  p => (p.subjectName  || '').toLowerCase(),
+      branch: p => (p.branch       || '').toLowerCase(),
+      code:   p => (p.subjectCode  || '').toLowerCase(),
+      year:   p => parseInt(p.year) || 0,
     };
     const getter = fieldMap[sortField] || fieldMap.title;
 
@@ -492,7 +508,7 @@ window.getPaperUrl = function(pid) {
     });
   }
 
-  // ─── Render ─────────────────────────────
+  // â”€â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function renderResults() {
     if (!papersContainer) return;
     const total = filteredPapers.length;
@@ -514,7 +530,7 @@ window.getPaperUrl = function(pid) {
 
   function getBranchName(p) {
     const b = branches.find(x => x.id === (p.branchId || p.branch));
-    return b?.name || p.branch || '—';
+    return b?.name || p.branch || '"”';
   }
   function getUnivName(p) {
     const u = universities.find(x => x.id === p.universityId);
@@ -522,40 +538,42 @@ window.getPaperUrl = function(pid) {
   }
 
   function renderPaperCard(p) {
+    const codeLabel    = escHtml(p.displayCode || p.subjectCode || 'N/A');
+    const subjectLabel = escHtml(p.subjectName  || 'Question Paper');
+    const courseLabel  = escHtml(p.courseType   || '-');
+    const branchLabel  = escHtml(p.branch       || '-');
+    const examLabel    = `${p.month ? escHtml(p.month) + ' ' : ''}${p.year || '-'}`;
+    const paperUrl = window.getPaperUrl(p.paperId || p.id);
     return `
     <article class="paper-card" role="article">
       <div class="paper-card-top">
-        <div class="paper-card-code">📄 ${p.code || 'N/A'}</div>
-        <h3 class="paper-card-title">${escHtml(p.title || p.subject || 'Question Paper')}</h3>
+        <div class="paper-card-code">&#128196; ${codeLabel}</div>
+        <h3 class="paper-card-title">${subjectLabel}</h3>
       </div>
       <div class="paper-card-body">
         <div class="paper-meta-grid">
           <div class="paper-meta-item">
-            <label>University</label>
-            <span>${escHtml(getUnivName(p))}</span>
+            <label>Course</label>
+            <span>${courseLabel}</span>
           </div>
           <div class="paper-meta-item">
             <label>Branch</label>
-            <span>${escHtml(getBranchName(p))}</span>
+            <span>${branchLabel}</span>
           </div>
           <div class="paper-meta-item">
-            <label>Semester</label>
-            <span>Sem ${p.semester || '—'}</span>
-          </div>
-          <div class="paper-meta-item">
-            <label>Year</label>
-            <span>${p.year || '—'}</span>
+            <label>Exam</label>
+            <span>${examLabel}</span>
           </div>
         </div>
       </div>
       <div class="paper-card-footer">
-        <span class="badge badge-purple">${escHtml(p.subject || '—')}</span>
+        <span class="badge badge-purple">${subjectLabel}</span>
         <div style="display: flex; gap: 8px; align-items: center;">
-          <button onclick="sharePaper('${escHtml(p.title || p.subject || 'Paper')}', window.getPaperUrl('${p.id}'))" class="btn-share" aria-label="Share paper">
+          <button onclick="sharePaper('${escHtml(p.subjectName || 'Paper')}', '${paperUrl}')" class="btn-share" aria-label="Share paper">
             ${SHARE_ICON}<span class="share-label">Share</span>
           </button>
-          <a href="${window.getPaperUrl(p.id)}" class="btn btn-primary" target="_blank" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
-            👁 View
+          <a href="${paperUrl}" class="btn btn-primary" target="_blank" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.subjectName || 'paper')}">
+            &#128073; View Paper
           </a>
         </div>
       </div>
@@ -567,15 +585,15 @@ window.getPaperUrl = function(pid) {
     const pages = Math.ceil(total / PAGE_SIZE);
     if (pages <= 1) { paginationEl.innerHTML = ''; return; }
     let html = '';
-    html += `<button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} aria-label="Previous">‹</button>`;
+    html += `<button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} aria-label="Previous"><</button>`;
     for (let i = 1; i <= pages; i++) {
       if (i === 1 || i === pages || Math.abs(i - currentPage) <= 1) {
         html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
       } else if (Math.abs(i - currentPage) === 2) {
-        html += `<span style="padding:0 4px;color:var(--text-muted)">…</span>`;
+        html += `<span style="padding:0 4px;color:var(--text-muted)">...</span>`;
       }
     }
-    html += `<button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage === pages ? 'disabled' : ''} aria-label="Next">›</button>`;
+    html += `<button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage === pages ? 'disabled' : ''} aria-label="Next">></button>`;
     paginationEl.innerHTML = html;
   }
 
@@ -587,13 +605,13 @@ window.getPaperUrl = function(pid) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // ─── Active Filters UI ──────────────────
+  // â”€â”€â”€ Active Filters UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function renderActiveFilters() {
     if (!activeFiltersWrap) return;
     const entries = Object.entries(activeFilters);
     if (!entries.length) { activeFiltersWrap.innerHTML = ''; return; }
     activeFiltersWrap.innerHTML = entries.map(([key, val]) =>
-      `<span class="active-filter-pill">${escHtml(val)}<button onclick="clearFilter('${key}')" aria-label="Remove ${key} filter">✕</button></span>`
+      `<span class="active-filter-pill">${escHtml(val)}<button onclick="clearFilter('${key}')" aria-label="Remove ${key} filter">x</button></span>`
     ).join('');
   }
 
@@ -631,289 +649,15 @@ window.getPaperUrl = function(pid) {
     });
   }
 
-  // ─── Paper Viewer (Google Docs wrapper with auto-retry) ───
-  let viewerRetryTimer = null;
-  let viewerLoadTimer = null;
-
-  function getViewerLoader() {
-    return viewerFrame?.closest('.modal-body')?.querySelector('.viewer-loader');
-  }
+  // â”€â”€â”€ PDF Viewer removed: cards now navigate directly via liveUrl â”€â”€â”€
 
   window.openPaperViewer = (id, title, url, type) => {
-    if (!url) { showToast('Paper not available yet.', 'error'); return; }
-    if (viewerTitle) viewerTitle.textContent = title;
-
-    // Clear any pending timers from previous viewer session
-    clearTimeout(viewerRetryTimer);
-    clearTimeout(viewerLoadTimer);
-
-    if (viewerFrame) {
-      const pdfContainer = document.getElementById('pdfContainer');
-      const canvas = document.getElementById('pdfCanvas');
-
-      // Viewer UI Controls
-      const pagination = viewerModal.querySelector('.viewer-pagination');
-      const pageNumSpan = document.getElementById('pageNum');
-      const pageCountSpan = document.getElementById('pageCount');
-      const prevPageBtn = document.getElementById('prevPage');
-      const nextPageBtn = document.getElementById('nextPage');
-      const zoomInBtn = document.getElementById('zoomIn');
-      const zoomOutBtn = document.getElementById('zoomOut');
-
-      if (viewerModal && canvas) {
-        // Open Modal & Reset UI State
-        viewerModal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-
-        const loader = getViewerLoader();
-        if (loader) loader.style.display = 'flex';
-        pdfContainer.style.display = 'none';
-        [pagination, prevPageBtn, nextPageBtn, zoomInBtn, zoomOutBtn].forEach(el => el && (el.style.display = 'none'));
-
-        // Use standard window scope variables for viewer state
-        window._pdfDoc = null;
-        window._pdfPageNum = 1;
-        window._pdfScale = 1.2; // Default render scale
-        let isRendering = false;
-        let pageNumPending = null;
-
-        // Zoom state
-        let touchScale = 1;
-        let initialPinchDistance = 0;
-        let lastPinchTime = 0; // Prevent tap registering right after pinch
-
-        const updateTransform = () => {
-          // Ensure we don't zoom out past original size too much
-          touchScale = Math.max(1, Math.min(touchScale, 5));
-          canvas.style.width = (100 * touchScale) + '%';
-          canvas.style.transform = `scale(${touchScale})`;
-        };
-
-        const updateSize = () => {
-          touchScale = Math.max(1, Math.min(touchScale, 5));
-          canvas.style.width = (100 * touchScale) + '%';
-        };
-
-        const resetTransform = () => {
-          touchScale = 1;
-          updateSize();
-        };
-
-        // Touch Event Listeners for pinch-to-zoom
-        pdfContainer.addEventListener('touchstart', (e) => {
-          if (e.touches.length >= 2) {
-            initialPinchDistance = Math.hypot(
-              e.touches[0].clientX - e.touches[1].clientX,
-              e.touches[0].clientY - e.touches[1].clientY
-            );
-          }
-        }, { passive: false });
-
-        pdfContainer.addEventListener('touchmove', (e) => {
-          if (e.touches.length >= 2) {
-            e.preventDefault(); // Prevent default scroll when pinching
-            const currentDistance = Math.hypot(
-              e.touches[0].clientX - e.touches[1].clientX,
-              e.touches[0].clientY - e.touches[1].clientY
-            );
-
-            if (initialPinchDistance > 0) {
-              const delta = currentDistance / initialPinchDistance;
-              touchScale *= delta;
-              initialPinchDistance = currentDistance;
-              lastPinchTime = new Date().getTime(); // Mark that we just pinched
-              updateSize();
-            }
-          }
-        }, { passive: false });
-
-        pdfContainer.addEventListener('touchend', (e) => {
-          if (e.touches.length < 2) {
-            initialPinchDistance = 0;
-          }
-        });
-
-        // Double tap to reset zoom
-        let lastTap = 0;
-        pdfContainer.addEventListener('touchend', (e) => {
-          const currentTime = new Date().getTime();
-
-          // If we just finished a pinch zoom, ignore this as a tap to prevent accidental resets
-          if (currentTime - lastPinchTime < 300) {
-            return;
-          }
-
-          if (e.changedTouches.length === 1) {
-            const tapLength = currentTime - lastTap;
-            if (tapLength < 500 && tapLength > 0) {
-              resetTransform();
-              e.preventDefault();
-            }
-            lastTap = currentTime;
-          }
-        });
-
-        const ctx = canvas.getContext('2d');
-
-        // Render the page
-        const renderPage = (num) => {
-          isRendering = true;
-
-          // Fetch page
-          window._pdfDoc.getPage(num).then((page) => {
-            const viewport = page.getViewport({ scale: window._pdfScale });
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-
-            const renderContext = {
-              canvasContext: ctx,
-              viewport: viewport
-            };
-
-            const renderTask = page.render(renderContext);
-
-            renderTask.promise.then(() => {
-              isRendering = false;
-              if (loader) loader.style.display = 'none';
-              pdfContainer.style.display = 'block';
-
-              // Show/Hide controls
-              [pagination, prevPageBtn, nextPageBtn, zoomInBtn, zoomOutBtn].forEach(el => el && (el.style.display = 'flex'));
-              if (pageNumSpan) pageNumSpan.textContent = num;
-
-              // Next/Prev buttons state
-              if (prevPageBtn) prevPageBtn.disabled = num <= 1;
-              if (nextPageBtn) nextPageBtn.disabled = num >= window._pdfDoc.numPages;
-
-              if (pageNumPending !== null) {
-                renderPage(pageNumPending);
-                pageNumPending = null;
-              }
-            });
-          }).catch(err => {
-            console.error("Error rendering PDF page:", err);
-            isRendering = false;
-            if (loader) loader.innerHTML = `<span style="color:var(--danger)">Error rendering PDF. Please try again later.</span>`;
-          });
-        };
-
-        const queueRenderPage = (num) => {
-          if (isRendering) {
-            pageNumPending = num;
-          } else {
-            renderPage(num);
-          }
-        };
-
-        const onPrevPage = () => {
-          if (window._pdfPageNum <= 1) return;
-          window._pdfPageNum--;
-          resetTransform();
-          queueRenderPage(window._pdfPageNum);
-        };
-
-        const onNextPage = () => {
-          if (window._pdfPageNum >= window._pdfDoc.numPages) return;
-          window._pdfPageNum++;
-          resetTransform();
-          queueRenderPage(window._pdfPageNum);
-        };
-
-        const onZoomIn = () => {
-          touchScale += 0.5;
-          updateSize();
-        };
-
-        const onZoomOut = () => {
-          touchScale -= 0.5;
-          updateSize();
-        };
-
-        // Attach event listeners natively to buttons
-        if (prevPageBtn) prevPageBtn.onclick = onPrevPage;
-        if (nextPageBtn) nextPageBtn.onclick = onNextPage;
-        if (zoomInBtn) zoomInBtn.onclick = onZoomIn;
-        if (zoomOutBtn) zoomOutBtn.onclick = onZoomOut;
-
-        // Fetch the PDF using pdf.js
-        const fetchAndRenderPDF = async () => {
-          try {
-            // Ensure pdf.js is loaded
-            if (!window.pdfjsLib) {
-              throw new Error("PDF.js library failed to load");
-            }
-
-            const loadingTask = window.pdfjsLib.getDocument(url);
-            window._pdfDoc = await loadingTask.promise;
-
-            if (pageCountSpan) pageCountSpan.textContent = window._pdfDoc.numPages;
-
-            // Render first page
-            renderPage(window._pdfPageNum);
-
-          } catch (error) {
-            console.error("Error loading PDF:", error);
-            if (loader) {
-              loader.innerHTML = `
-                   <span style="color:var(--danger); text-align:center;">
-                     Error loading document.<br>
-                     <small style="color:var(--text-muted);">${error.message}</small>
-                   </span>`;
-            }
-          }
-        };
-
-        // Start the flow
-        fetchAndRenderPDF();
-
-      }
-    }
-
-    // Add history state so native mobile back button closes modal
-    window.history.pushState({ modal: 'viewer' }, '', '#viewer');
-    openModal('viewerModal');
+    // Legacy stub "” redirect to the static paper page instead
+    if (url) window.open(url, '_blank');
   };
 
-  // Listen for native back button to close modal
-  window.addEventListener('popstate', (e) => {
-    const viewerModal = document.getElementById('viewerModal');
-    if (viewerModal && viewerModal.classList.contains('active') && window.location.hash !== '#viewer') {
-      document.getElementById('closeViewer').click();
-    }
-  });
 
-  if (document.getElementById('closeViewer')) {
-    document.getElementById('closeViewer').addEventListener('click', () => {
-      clearTimeout(viewerRetryTimer);
-      clearTimeout(viewerLoadTimer);
-      closeModal('viewerModal');
-
-      const canvas = document.getElementById('pdfCanvas');
-      const pdfContainer = document.getElementById('pdfContainer');
-      const loader = getViewerLoader();
-
-      if (canvas && pdfContainer) {
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        pdfContainer.style.display = 'none';
-      }
-      if (loader) {
-        loader.style.display = 'flex';
-        loader.innerHTML = `<div class="spinner"></div><span style="margin-top: 14px; font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">Loading secure viewer...</span>`;
-      }
-      if (window._pdfDoc) {
-        window._pdfDoc.destroy();
-        window._pdfDoc = null;
-      }
-
-      // Clean up URL if we closed via the button instead of native back
-      if (window.location.hash === '#viewer') {
-        window.history.replaceState('', document.title, window.location.pathname + window.location.search);
-      }
-    });
-  }
-
-  // ─── Sort Controls ──────────────────────
+  // â”€â”€â”€ Sort Controls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   document.querySelectorAll('.sort-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       document.querySelectorAll('.sort-chip').forEach(c => c.classList.remove('active'));
@@ -936,7 +680,7 @@ window.getPaperUrl = function(pid) {
     });
   }
 
-  // ─── View Toggle ────────────────────────
+  // â”€â”€â”€ View Toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   document.querySelectorAll('.view-btn-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.view-btn-toggle').forEach(b => b.classList.remove('active'));
@@ -946,7 +690,7 @@ window.getPaperUrl = function(pid) {
     });
   });
 
-  // ─── Search/Filter Events ───────────────
+  // â”€â”€â”€ Search/Filter Events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const searchPapersBtn = document.getElementById('searchPapersBtn');
 
   function triggerGlobalSearch() {
@@ -986,7 +730,7 @@ window.getPaperUrl = function(pid) {
     searchPapersBtn.addEventListener('click', triggerGlobalSearch);
   }
 
-  // ─── Cascading Filter Events: Degree → University → Branch ───
+  // â”€â”€â”€ Cascading Filter Events: Degree â†’ University â†’ Branch â”€â”€â”€
   async function reloadBranchesCascade() {
     const uId = filterUniversity?.value || null;
     const deg = filterDegree?.value || null;
@@ -1019,7 +763,7 @@ window.getPaperUrl = function(pid) {
   if (filterCode) filterCode.addEventListener('input', () => { clearTimeout(codeTimeout); codeTimeout = setTimeout(applyFilters, 300); });
   if (filterSubject) filterSubject.addEventListener('input', () => { clearTimeout(subjTimeout); subjTimeout = setTimeout(applyFilters, 300); });
 
-  // ─── Helpers ────────────────────────────
+  // â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function showLoading(show) {
     if (loadingEl) loadingEl.style.display = show ? 'flex' : 'none';
     if (papersContainer) papersContainer.style.display = show ? 'none' : '';
@@ -1034,7 +778,7 @@ window.getPaperUrl = function(pid) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
-  // ─── Populate Year Dropdown ─────────────
+  // â”€â”€â”€ Populate Year Dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function populateYears() {
     if (!filterYear) return;
     const current = new Date().getFullYear();
@@ -1045,7 +789,7 @@ window.getPaperUrl = function(pid) {
     }
   }
 
-  // ─── Init ───────────────────────────────
+  // â”€â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async function init() {
     populateYears();
     await loadDegrees();
@@ -1056,7 +800,7 @@ window.getPaperUrl = function(pid) {
 
   if (document.getElementById('papersContainer')) init();
 
-  // ─── Homepage featured papers ────────────
+  // â”€â”€â”€ Homepage featured papers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const featuredContainer = document.getElementById('featuredPapers');
   if (featuredContainer) {
     (async () => {
@@ -1066,30 +810,28 @@ window.getPaperUrl = function(pid) {
         if (!papers.length) { featuredContainer.innerHTML = '<p style="text-align:center;color:var(--text-muted)">No papers yet.</p>'; return; }
         featuredContainer.className = 'card-grid grid-3';
         featuredContainer.innerHTML = papers.map(p => {
-          const b = p.branch || 'General';
-          const y = p.year || '';
+          const paperUrl = window.getPaperUrl(p.paperId || p.id);
           return `
           <article class="paper-card">
             <div class="paper-card-top">
-              <div class="paper-card-code">📄 ${p.code || 'N/A'}</div>
-              <h3 class="paper-card-title">${escHtml(p.title || p.subject || 'Question Paper')}</h3>
+              <div class="paper-card-code">&#128196; ${escHtml(p.displayCode || p.subjectCode || 'N/A')}</div>
+              <h3 class="paper-card-title">${escHtml(p.subjectName || 'Question Paper')}</h3>
             </div>
             <div class="paper-card-body">
               <div class="paper-meta-grid">
-                <div class="paper-meta-item"><label>Branch</label><span>${escHtml(b)}</span></div>
-                <div class="paper-meta-item"><label>Year</label><span>${y || '—'}</span></div>
-                <div class="paper-meta-item"><label>Semester</label><span>Sem ${p.semester || '—'}</span></div>
-                <div class="paper-meta-item"><label>Subject</label><span>${escHtml(p.subject || '—')}</span></div>
+                <div class="paper-meta-item"><label>Course</label><span>${escHtml(p.courseType || '-')}</span></div>
+                <div class="paper-meta-item"><label>Branch</label><span>${escHtml(p.branch || '-')}</span></div>
+                <div class="paper-meta-item"><label>Exam</label><span>${escHtml(p.month || '')} ${p.year || '-'}</span></div>
               </div>
             </div>
             <div class="paper-card-footer">
-              <span class="badge badge-purple">${escHtml(p.subject || '—')}</span>
+              <span class="badge badge-purple">${escHtml(p.subjectName || '-')}</span>
               <div style="display: flex; gap: 8px; align-items: center;">
-                <button onclick="sharePaper('${escHtml(p.title || p.subject || 'Paper')}', window.getPaperUrl('${p.id}'))" class="btn-share" aria-label="Share paper">
+                <button onclick="sharePaper('${escHtml(p.subjectName || 'Paper')}', '${paperUrl}')" class="btn-share" aria-label="Share paper">
                   ${SHARE_ICON}<span class="share-label">Share</span>
                 </button>
-                <a href="${window.getPaperUrl(p.id)}" class="btn btn-primary" target="_blank" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.title || 'paper')}">
-                  👁 View
+                <a href="${paperUrl}" class="btn btn-primary" target="_blank" style="text-decoration: none; padding: 6px 14px; border-radius: 8px;" aria-label="View ${escHtml(p.subjectName || 'paper')}">
+                  &#128073; View Paper
                 </a>
               </div>
             </div>
@@ -1099,7 +841,7 @@ window.getPaperUrl = function(pid) {
     })();
   }
 
-  // ─── Homepage Stats counters from Firebase ──
+  // â”€â”€â”€ Homepage Stats counters from Firebase â”€â”€
   const statsEl = document.getElementById('liveStats');
   if (statsEl) {
     (async () => {

@@ -4,38 +4,28 @@ echo   RGPV Papers - Static Site Generator (SEO Build)
 echo ===================================================
 echo.
 
-echo [1/4] Fetching latest database from Firebase...
-node scripts/generate-static-data.js
+echo [1/4] Fetching latest database from Firebase (Skipping for Dummy Test)...
+rem node scripts/generate-static-data.js
+rem if %errorlevel% neq 0 exit /b %errorlevel%
+
+echo.
+echo [2/4] Generating Native Physical Directory...
+node seo/generate-file-directory.js
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 echo.
-echo [2/4] Regenerating individual paper pages...
+echo [3/4] Generating Individual Long-Tail Paper Pages...
 node seo/generate-papers.js
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 echo.
-echo [3/4] Auto-generating all subject landing pages...
-node seo/generate-pages.js
-if %errorlevel% neq 0 exit /b %errorlevel%
-
-echo.
-echo [4/4] Rebuilding the Subjects Directory HTML...
-node seo/generate-subjects.js
-if %errorlevel% neq 0 exit /b %errorlevel%
-
-echo.
-echo [5/6] Regenerating individual blog pages...
+echo [4/4] Regenerating Blog Pages...
 node scripts/generate-individual-blogs.js
-if %errorlevel% neq 0 exit /b %errorlevel%
-
-echo.
-echo [6/6] Regenerating main blog listing page...
 node scripts/build-static-blogs.js
-if %errorlevel% neq 0 exit /b %errorlevel%
 
 echo.
 echo ===================================================
-echo   ✅ BUILD COMPLETE! All papers, subjects, and blogs updated.
-echo   Push these changes to GitHub to deploy to Vercel.
+echo   ✅ BUILD COMPLETE! Massive Directory structure generated.
+echo   Check your front/ directory to see all the new HTML files!
 echo ===================================================
 pause

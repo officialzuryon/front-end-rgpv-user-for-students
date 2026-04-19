@@ -1,0 +1,99 @@
+/* =========================================
+   RGPV EXAM PAPER STYLESHEET
+   This is the master CSS file to link in your web app's <head>
+   Adapted to prevent clashing with the main website's UI (Navbar/Footer)
+   ========================================= */
+
+/* Scoped inside .exam-container */
+.exam-container { 
+    font-family: "Times New Roman", Times, serif; 
+    color: #222; 
+    line-height: 1.6; 
+}
+
+/* Responsive Continuous Container */
+.exam-container { 
+    width: 100%; 
+    max-width: 850px; 
+    margin: 0 auto; 
+    background: #fff; 
+    padding: 30px 5%; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+}
+
+/* Ensure no margins/padding mess up the inside layout */
+.exam-container * { box-sizing: border-box; }
+
+/* Header Styling */
+.exam-container .paper-header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #ccc; }
+.exam-container .header-top-row { display: flex; justify-content: space-between; font-size: 11pt; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+.exam-container .roll-no-box { font-family: "Courier New", Courier, monospace; font-size: 11pt; }
+.exam-container .subject-code { font-weight: bold; font-size: 14pt; margin: 8px 0; }
+.exam-container .course-details, .exam-container .examination-details, .exam-container .grading-system { font-size: 12pt; margin: 5px 0; }
+.exam-container .paper-title { font-size: 16pt; font-weight: bold; margin: 15px 0; text-transform: uppercase; }
+
+.exam-container .paper-header h2 { font-size: clamp(1.2rem, 3vw, 1.5rem); margin: 5px 0; font-weight: bold; line-height: 1.3; }
+.exam-container .paper-header h3 { font-size: clamp(1.1rem, 2.5vw, 1.3rem); margin: 5px 0; font-weight: bold; line-height: 1.3; }
+.exam-container .paper-header h4 { font-size: 11pt; margin: 5px 0; line-height: 1.3; }
+.exam-container .time-marks-row { display: flex; justify-content: space-between; font-size: 11pt; font-weight: bold; margin-top: 15px; flex-wrap: wrap; gap: 10px; }
+
+/* Content Styling */
+.exam-container .paper-instructions { margin-bottom: 30px; font-size: 11pt; }
+.exam-container .instruction-item { display: flex; margin-bottom: 8px; }
+.exam-container .hindi-text { font-size: 12pt; display: block; margin-top: 4px; color: #444; }
+.exam-container .questions-list { font-size: 12pt; text-align: justify; }
+.exam-container .question { margin-bottom: 30px; }
+.exam-container .question-part { margin-bottom: 15px; display: flex; align-items: flex-start; flex-wrap: wrap; }
+.exam-container .question-number { font-weight: bold; min-width: 35px; }
+.exam-container .question-text-wrapper { flex-grow: 1; width: calc(100% - 40px); overflow-wrap: break-word; }
+.exam-container .equation { font-family: "Courier New", Courier, monospace; font-weight: bold; display: block; margin: 10px 0; text-align: center; overflow-x: auto; }
+
+/* Diagram Styling */
+.exam-container .diagram-container { text-align: center; margin: 20px 0; width: 100%; }
+.exam-container .diagram-container img { max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; }
+
+/* Footer Styling */
+.exam-container .paper-footer { text-align: center; margin-top: 40px; font-size: 11pt; font-weight: bold; padding-top: 20px; border-top: 1px solid #ccc; display: flex; flex-direction: column; gap: 10px; }
+
+/* =========================================
+   PRINT MEDIA QUERIES — Save as PDF
+   ========================================= */
+
+/* Utility class for the print button shown on paper pages */
+.btn-print-pdf {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 36px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #6c3ae0 0%, #4f46e5 100%);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(108, 58, 224, 0.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    font-family: inherit;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+}
+.btn-print-pdf:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(108, 58, 224, 0.45);
+    opacity: 0.95;
+}
+.btn-print-pdf:active {
+    transform: translateY(0);
+}
+.btn-print-pdf svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* Print Rules */
+@media print { 
+    .exam-container { box-shadow: none; padding: 0; max-width: 100%; border: none; } 
+}

@@ -53,6 +53,13 @@ async function fetchCollection(collectionName) {
           }
         }
         
+        // ── New schema: compute liveUrl + displayCode, strip heavy fields ──
+        parsed.liveUrl = `/${parsed.paperId || id}.html`;
+        parsed.displayCode = (parsed.branch && parsed.subjectCode)
+          ? `${parsed.branch}-${parsed.subjectCode}`
+          : (parsed.subjectCode || '');
+        delete parsed.searchTerms;
+
         return parsed;
       });
 
@@ -81,10 +88,10 @@ async function generateStaticData() {
       fetchCollection('blogs')
     ]);
 
-    // 2. Process data: Enforce max 4 most recent papers per subject
+    // 2. Process data: Enforce max 4 most recent papers per subject (keyed on new schema fields)
     const paperGroups = {};
     papers.forEach(p => {
-      const key = ((p.code || '') + '-' + (p.title || p.subject || '')).toLowerCase().trim();
+      const key = ((p.subjectCode || '') + '-' + (p.subjectName || '')).toLowerCase().trim();
       if (!paperGroups[key]) paperGroups[key] = [];
       paperGroups[key].push(p);
     });
