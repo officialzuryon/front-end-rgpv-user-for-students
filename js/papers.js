@@ -548,8 +548,8 @@ window.getPaperUrl = function(pid) {
     const branchLabel  = escHtml(p.branch       || p.branchId || '-');
     const examLabel    = `${p.month ? escHtml(p.month) + ' ' : ''}${p.year || '-'}`;
     
-    // Always prefer the liveUrl if it exists since it's exactly where the file is.
-    const paperUrl = p.liveUrl ? p.liveUrl : window.getPaperUrl(p.paperId || p.id);
+    // Always use getPaperUrl — liveUrl in JSON points to root (/) but files live under /paper/
+    const paperUrl = window.getPaperUrl(p.paperId || p.id);
     return `
     <article class="paper-card" role="article">
       <div class="paper-card-top">
